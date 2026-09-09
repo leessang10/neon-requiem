@@ -63,14 +63,44 @@ export function App() {
       enemy: new Image(),
       terminal: new Image(),
       arcology: new Image(),
+      atlas: new Image(),
     };
     imgs.bg.src = "/assets/battlefield.png";
     imgs.terminal.src = "/assets/terminal.png";
     imgs.arcology.src = "/assets/arcology.png";
     imgs.player.src = "/assets/runner.png";
+    imgs.atlas.src = "/assets/walk-atlas.png";
     imgs.enemy.src = "/assets/enemy.png";
     Promise.all(Object.values(imgs).map((im) => im.decode()))
-      .then(() => !stopped && setLoaded(true))
+      .then(() => {
+        // Generated atlas has a light checker matte. Flood only connected background,
+        // preserving enclosed metallic highlights and the actual limb silhouettes.
+        const sheet = document.createElement("canvas");
+        sheet.width = imgs.atlas.naturalWidth; sheet.height = imgs.atlas.naturalHeight;
+        const context = sheet.getContext("2d", { willReadFrequently: true });
+        context.drawImage(imgs.atlas, 0, 0);
+        const pixels = context.getImageData(0, 0, sheet.width, sheet.height);
+        const { data } = pixels, count = sheet.width * sheet.height;
+        const visited = new Uint8Array(count), queue = new Int32Array(count);
+        let head = 0, tail = 0;
+        const add = (i) => {
+          if (i < 0 || i >= count || visited[i]) return;
+          visited[i] = 1;
+          const r = data[i*4], g = data[i*4+1], b = data[i*4+2];
+          if (Math.min(r,g,b) > 155 && Math.max(r,g,b) - Math.min(r,g,b) < 25) queue[tail++] = i;
+        };
+        for (let x = 0; x < sheet.width; x++) { add(x); add(count-sheet.width+x); }
+        for (let y = 0; y < sheet.height; y++) { add(y*sheet.width); add((y+1)*sheet.width-1); }
+        while (head < tail) {
+          const i = queue[head++]; data[i*4+3] = 0;
+          if (i % sheet.width) add(i-1);
+          if (i % sheet.width < sheet.width-1) add(i+1);
+          add(i-sheet.width); add(i+sheet.width);
+        }
+        context.putImageData(pixels, 0, 0);
+        imgs.walkAtlas = sheet;
+        if (!stopped) setLoaded(true);
+      })
       .catch(() => !stopped && setPanel("asset-error"));
     const tick = (now) => {
       if (stopped) return;
@@ -112,11 +142,11 @@ export function App() {
         } else if (st.mode === "paused") st.mode = "playing";
         return;
       }
-      st.keys.add(e.key.toLowerCase());
+      st.keys.add(e.code.startsWith("Key") ? e.code.slice(3).toLowerCase() : e.key.toLowerCase());
       if (e.key === "Shift") dash(st);
       if (e.code === "Space") overclock(st);
     };
-    const up = (e) => engine.current.keys.delete(e.key.toLowerCase());
+    const up = (e) => engine.current.keys.delete(e.code.startsWith("Key") ? e.code.slice(3).toLowerCase() : e.key.toLowerCase());
     const blur = () => {
       engine.current.keys.clear();
       engine.current.stick = { x: 0, y: 0 };
@@ -213,6 +243,7 @@ export function App() {
     if (mode === 'menu') engine.current = createState();
     engine.current.mode = mode;
     engine.current.keys.clear();
+    engine.current.stick = { x: 0, y: 0 };
     refresh();
   };
   const action = (fn) => {
@@ -230,21 +261,8 @@ export function App() {
     <main className={`game-shell ${s.mode === "menu" ? "in-menu" : ""}`}>
       <canvas
         ref={canvas}
-        aria-label="네온 레퀴엠 전장. WASD 또는 방향키 이동, Shift 회피, Space 오버클럭."
-        onPointerDown={(e) => {
-          const st = engine.current;
-          if (st.mode !== "playing") return;
-          const r = e.currentTarget.getBoundingClientRect(),
-            scale = Math.max(r.width / 1440, r.height / 1024),
-            vw = r.width / scale,
-            vh = r.height / scale,
-            cx = Math.max(0, Math.min(1440 - vw, st.x - vw / 2)),
-            cy = Math.max(0, Math.min(1024 - vh, st.y - vh / 2));
-          st.target = {
-            x: (e.clientX - r.left) / scale + cx,
-            y: (e.clientY - r.top) / scale + cy,
-          };
-        }}
+        aria-label="네온 레퀴엠 전장. WASD 또는 조이스틱 이동, Shift 회피, Space 오버클럭."
+
       />
       {s.mode === "menu" ? (
         <>
@@ -347,104 +365,31 @@ export function App() {
         </>
       ) : (
         <>
-          <header className="hud-top">
-            <div className="vitals">
-              <img src="/assets/runner.png" alt="사이버 용병" />
-              <div>
-                <div className="hud-brand">NEON REQUIEM</div>
-                <div className="hp-label">
-                  HP{" "}
-                  <strong>
-                    {Math.ceil(s.hp)} / {s.maxHp}
-                  </strong>
-                  <small>LV. {s.level}</small>
-                </div>
-                <div className="meter health">
-                  <i style={{ width: `${(s.hp / s.maxHp) * 100}%` }} />
-                </div>
-                <div className="sync-label">
-                  SYNC {Math.floor((s.xp / s.nextXp) * 100)}%{" "}
-                  <span>
-                    {s.xp} / {s.nextXp}
-                  </span>
-                </div>
-                <div className="meter xp">
-                  <i style={{ width: `${(s.xp / s.nextXp) * 100}%` }} />
-                </div>
+          <header className="simple-hud">
+            <div className="status-bars">
+              <div className="status-bar health" role="progressbar" aria-label="체력" aria-valuenow={Math.ceil(s.hp)} aria-valuemin={0} aria-valuemax={s.maxHp}>
+                <i style={{ width: `${s.hp / s.maxHp * 100}%` }} />
+                <span>체력</span><strong>{Math.ceil(s.hp)} / {s.maxHp}</strong>
+              </div>
+              <div className="status-bar experience" role="progressbar" aria-label="경험치" aria-valuenow={s.xp} aria-valuemin={0} aria-valuemax={s.nextXp}>
+                <i style={{ width: `${s.xp / s.nextXp * 100}%` }} />
+                <span>경험치 · LV.{s.level}</span><strong>{s.xp} / {s.nextXp}</strong>
               </div>
             </div>
-            <div className="timer">
-              <div>SECTOR 0{s.sector + 1}</div>
-              <p>{SECTORS[s.sector]}</p>
-              <strong>{time(s.time)}</strong>
-              <small>
-                ELIMINATED <b>{s.kills}</b>
-              </small>
-            </div>
-            <div className="mission">
-              <div className="mission-title">
-                <Crosshair size={23} /> 중계기 해킹{" "}
-                <b>{s.nodes.filter((n) => n.p >= 1).length}/3</b>
-              </div>
-              <div className="mission-nodes">
-                {s.nodes.map((n, i) => (
-                  <span className={n.p >= 1 ? "linked" : ""} key={i}>
-                    {String(i + 1).padStart(2, "0")}
-                    <i style={{ width: `${n.p * 100}%` }} />
-                  </span>
-                ))}
-              </div>
-              <small>중계기 반경에서 8초간 연결 유지</small>
-              <div className="top-actions">
-                <button
-                  className="icon-button"
-                  onClick={sound}
-                  aria-label={muted ? "음향 켜기" : "음향 끄기"}
-                >
-                  {muted ? <SpeakerSlash /> : <SpeakerHigh />}
-                </button>
-                <button
-                  className="icon-button"
-                  onClick={() => setMode("paused")}
-                  aria-label="일시정지"
-                >
-                  <Pause />
-                </button>
-              </div>
+            <div className="operation-strip">
+              <span>구역 0{s.sector + 1} <b>{time(s.time)}</b></span>
+              <span>처치 {s.kills} · 중계기 {s.nodes.filter(n => n.p >= 1).length}/3</span>
+              <button className="icon-button" onClick={sound} aria-label={muted ? "음향 켜기" : "음향 끄기"}>{muted ? <SpeakerSlash /> : <SpeakerHigh />}</button>
+              <button className="icon-button" onClick={() => setMode("paused")} aria-label="일시정지"><Pause /></button>
             </div>
           </header>
           {s.noticeTime > 0 && s.mode === "playing" && (
             <div className="transmission">
-              <span>INCOMING TRANSMISSION</span>
+              
               {s.notice}
             </div>
           )}
           <div className="bottom-hud">
-            <div className="weapon-rack">
-              <div className="weapon selected">
-                <img
-                  className="rifle-icon"
-                  src="/assets/rifle.png"
-                  alt="스마트 라이플"
-                />
-                <span>
-                  SMART RIFLE · {Math.floor(s.damage / 18)}
-                  <small>AUTO / {Math.round(s.damage)} DMG</small>
-                </span>
-                <b>01</b>
-              </div>
-              <div className={`weapon compact ${s.drones ? "equipped" : ""}`}>
-                <Drone size={26} />
-                <small>{s.drones ? `DRONE ×${s.drones}` : "OFFLINE"}</small>
-              </div>
-              <div className={`weapon compact ${s.arc ? "equipped" : ""}`}>
-                <Lightning size={26} />
-                <small>{s.arc ? `ARC ${s.arc}` : "OFFLINE"}</small>
-              </div>
-            </div>
-            <div className="battle-controls">
-              <kbd>WASD</kbd> 이동 <kbd>SHIFT</kbd> 회피 <kbd>ESC</kbd> 일시정지
-            </div>
             <div className="abilities">
               <button disabled={s.dash > 0} onClick={() => action(dash)}>
                 <CaretDoubleRight size={36} weight="bold" />
@@ -478,8 +423,9 @@ export function App() {
             }}
             onPointerUp={() => (engine.current.stick = { x: 0, y: 0 })}
             onPointerCancel={() => (engine.current.stick = { x: 0, y: 0 })}
+            onLostPointerCapture={() => (engine.current.stick = { x: 0, y: 0 })}
           >
-            <Crosshair size={32} />
+            <Crosshair size={32} style={{ transform: `translate(${s.stick.x * 26}px, ${s.stick.y * 26}px)` }} />
           </div>
         </>
       )}
@@ -611,7 +557,7 @@ export function App() {
                   <button onClick={() => setMode("menu")}>메인 메뉴</button>
                 </div>
                 <p className="help">
-                  WASD / 방향키 이동 · Shift 회피 · Space 오버클럭
+                  WASD / 조이스틱 이동 · Shift 회피 · Space 오버클럭
                   <br />
                   중계기 원 안에서 8초 유지하면 해킹이 완료됩니다.
                 </p>

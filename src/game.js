@@ -1,3 +1,5 @@
+export const WORLD = { width: 4320, height: 3072 };
+export const SPAWN = { x: 2160, y: 1536 };
 export const SECTORS = [
   "BLACK RAIN DISTRICT",
   "GHOSTLINE TERMINAL",
@@ -50,8 +52,10 @@ export const UPGRADES = [
 export function createState() {
   return {
     mode: "menu",
-    x: 720,
-    y: 520,
+    x: SPAWN.x,
+    y: SPAWN.y,
+    walk: 0,
+    moving: false,
     hp: 100,
     maxHp: 100,
     time: 0,
@@ -78,9 +82,9 @@ export function createState() {
     gems: [],
     fx: [],
     nodes: [
-      { x: 390, y: 325, p: 0 },
-      { x: 1070, y: 430, p: 0 },
-      { x: 650, y: 760, p: 0 },
+      { x: 1550, y: 1130, p: 0 },
+      { x: 3050, y: 1490, p: 0 },
+      { x: 2050, y: 2350, p: 0 },
     ],
     keys: new Set(),
     stick: { x: 0, y: 0 },
@@ -135,24 +139,13 @@ export function step(s, dt, random = Math.random) {
   s.heat = Math.min(100, s.heat + dt * 4);
   s.noticeTime -= dt;
   let dx =
-    (s.keys.has("d") || s.keys.has("arrowright") ? 1 : 0) -
-    (s.keys.has("a") || s.keys.has("arrowleft") ? 1 : 0) +
+    (s.keys.has("d") ? 1 : 0) -
+    (s.keys.has("a") ? 1 : 0) +
     s.stick.x;
   let dy =
-    (s.keys.has("s") || s.keys.has("arrowdown") ? 1 : 0) -
-    (s.keys.has("w") || s.keys.has("arrowup") ? 1 : 0) +
+    (s.keys.has("s") ? 1 : 0) -
+    (s.keys.has("w") ? 1 : 0) +
     s.stick.y;
-  if (dx || dy) s.target = null;
-  if (s.target) {
-    const tx = s.target.x - s.x,
-      ty = s.target.y - s.y,
-      d = Math.hypot(tx, ty);
-    if (d < 8) s.target = null;
-    else {
-      dx = tx / d;
-      dy = ty / d;
-    }
-  }
   const length = Math.hypot(dx, dy);
   if (length > 0) {
     dx /= Math.max(1, length);
@@ -164,16 +157,21 @@ export function step(s, dt, random = Math.random) {
     dy = Math.sin(s.face);
   }
   const speed = s.speed * (s.dashTime > 0 ? 4.5 : 1);
-  s.x = clamp(s.x + dx * speed * dt, 145, 1295);
-  s.y = clamp(s.y + dy * speed * dt, 190, 865);
+  const oldX = s.x, oldY = s.y;
+  s.x = clamp(s.x + dx * speed * dt, 90, WORLD.width - 90);
+  s.y = clamp(s.y + dy * speed * dt, 90, WORLD.height - 90);
+  const distance = Math.hypot(s.x - oldX, s.y - oldY);
+  s.moving = distance > 0.01;
+  s.walk = s.moving ? s.walk + distance / 24 : 0;
   if (s.spawn <= 0 && s.enemies.length < 90) {
     s.spawn = Math.max(0.18, 0.55 - s.time * 0.001 - s.sector * 0.08);
     const a = random() * Math.PI * 2;
     const elite = random() < 0.08 + s.sector * 0.04;
     const hp = (elite ? 100 : 42) + s.sector * 22 + s.time * 0.13;
     s.enemies.push({
-      x: 720 + Math.cos(a) * 650,
-      y: 510 + Math.sin(a) * 440,
+      x: clamp(s.x + Math.cos(a) * 820, 40, WORLD.width - 40),
+      y: clamp(s.y + Math.sin(a) * 820, 40, WORLD.height - 40),
+      walk: random() * 4,
       hp,
       maxHp: hp,
       speed: (elite ? 39 : 55) + random() * 20 + s.sector * 12,
@@ -244,6 +242,8 @@ export function step(s, dt, random = Math.random) {
       continue;
     }
     const d = Math.hypot(s.x - e.x, s.y - e.y) || 1;
+    e.face = Math.atan2(s.y - e.y, s.x - e.x);
+    e.walk += e.speed * dt / 16;
     e.x += ((s.x - e.x) / d) * e.speed * dt;
     e.y += ((s.y - e.y) / d) * e.speed * dt;
     e.hit = Math.max(0, e.hit - dt);
@@ -305,8 +305,10 @@ export function nextSector(s) {
   s.enemies = [];
   s.bullets = [];
   s.gems = [];
-  s.x = 720;
-  s.y = 520;
+  s.x = SPAWN.x;
+  s.y = SPAWN.y;
+  s.stick = { x: 0, y: 0 };
+  s.keys.clear();
   s.nodes.forEach((n) => (n.p = 0));
   s.hp = Math.min(s.maxHp, s.hp + 35);
   s.heat = 100;
@@ -320,8 +322,8 @@ export function render(ctx, s, images, w, h) {
   const scale = Math.max(w / 1440, h / 1024),
     vw = w / scale,
     vh = h / scale,
-    cx = clamp(s.x - vw / 2, 0, 1440 - vw),
-    cy = clamp(s.y - vh / 2, 0, 1024 - vh);
+    cx = clamp(s.x - vw / 2, 0, WORLD.width - vw),
+    cy = clamp(s.y - vh / 2, 0, WORLD.height - vh);
   ctx.save();
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
@@ -331,16 +333,25 @@ export function render(ctx, s, images, w, h) {
       : s.sector === 2
         ? images.arcology
         : images.bg;
-  if (bg.complete && bg.naturalWidth) ctx.drawImage(bg, 0, 0, 1440, 1024);
+  if (bg.complete && bg.naturalWidth) {
+    if (s.mode === "menu") ctx.drawImage(bg, cx, cy, vw, vh);
+    else for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) {
+      ctx.save();
+      ctx.translate(col * 1440 + (col % 2 ? 1440 : 0), row * 1024 + (row % 2 ? 1024 : 0));
+      ctx.scale(col % 2 ? -1 : 1, row % 2 ? -1 : 1);
+      ctx.drawImage(bg, 0, 0, 1440, 1024);
+      ctx.restore();
+    }
+  }
   ctx.fillStyle = "rgba(0,8,15,.22)";
-  ctx.fillRect(0, 0, 1440, 1024);
+  ctx.fillRect(0, 0, WORLD.width, WORLD.height);
   if (s.mode === "menu") {
     ctx.restore();
     return;
   }
   for (let i = 0; i < 65; i++) {
-    const x = (i * 193 + s.time * 55) % 1440,
-      y = (i * 97 + s.time * 620) % 1024;
+    const x = cx + (i * 193 + s.time * 55) % vw,
+      y = cy + (i * 97 + s.time * 620) % vh;
     ctx.strokeStyle = "rgba(160,215,235,.15)";
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -414,8 +425,15 @@ export function render(ctx, s, images, w, h) {
       ctx.shadowBlur = 0;
       if (s.invuln > 0 && Math.floor(s.time * 16) % 2) ctx.globalAlpha = 0.55;
     }
-    if (img.complete && img.naturalWidth)
-      ctx.drawImage(img, -size / 2, -size * 0.72, size, size);
+    ctx.save();
+    if (Math.cos(e.player ? s.face : e.face) < 0) ctx.scale(-1, 1);
+    if (images.walkAtlas) {
+      const atlas = images.walkAtlas, fw = atlas.width / 4, fh = atlas.height / 2;
+      const frame = Math.floor(e.player ? s.walk : e.walk) % 4;
+      ctx.drawImage(atlas, frame * fw, e.player ? 0 : fh, fw, fh,
+        -size * .375, -size * .78, size * .75, size);
+    } else if (img.complete && img.naturalWidth) ctx.drawImage(img, -size / 2, -size * .72, size, size);
+    ctx.restore();
     if (e.enemy) {
       ctx.fillStyle = "#421f2a";
       ctx.fillRect(-19, -size * 0.7, 38, 3);
@@ -465,55 +483,16 @@ export function render(ctx, s, images, w, h) {
   }
   ctx.globalAlpha = 1;
   for (const [i, n] of s.nodes.entries()) {
-    if (n.p < 1 && (n.x < cx + 45 || n.x > cx + vw - 45)) {
+    if (n.p < 1 && (n.x < cx + 45 || n.x > cx + vw - 45 || n.y < cy + 110 || n.y > cy + vh - 150)) {
       const x = clamp(n.x, cx + 26, cx + vw - 26),
-        y = clamp(n.y, cy + 220, cy + vh - 240);
+        y = clamp(n.y, cy + 120, cy + vh - 160);
       ctx.fillStyle = "#9cf8ff";
       ctx.font = "bold 17px monospace";
       ctx.textAlign = "center";
-      ctx.fillText(n.x < cx ? "←" : "→", x, y);
+      ctx.fillText(n.y < cy + 110 ? "↑" : n.y > cy + vh - 150 ? "↓" : n.x < cx ? "←" : "→", x, y);
       ctx.font = "12px monospace";
       ctx.fillText(`0${i + 1}`, x, y + 17);
     }
   }
   ctx.restore();
-  if (w >= 1100) {
-    const x = w - 82,
-      y = 85,
-      r = 58;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = "#03131bd9";
-    ctx.strokeStyle = "#6cdee766";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.6, 0, Math.PI * 2);
-    ctx.moveTo(-r, 0);
-    ctx.lineTo(r, 0);
-    ctx.moveTo(0, -r);
-    ctx.lineTo(0, r);
-    ctx.stroke();
-    for (const e of s.enemies) {
-      const dx = (e.x - s.x) / 12,
-        dy = (e.y - s.y) / 12;
-      if (Math.hypot(dx, dy) < r - 3) {
-        ctx.fillStyle = e.elite ? "#ffd16e" : "#ff5674";
-        ctx.beginPath();
-        ctx.arc(dx, dy, e.elite ? 3 : 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    ctx.fillStyle = "#8effff";
-    ctx.beginPath();
-    ctx.moveTo(0, -5);
-    ctx.lineTo(4, 4);
-    ctx.lineTo(-4, 4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
 }

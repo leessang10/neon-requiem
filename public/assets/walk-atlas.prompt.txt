@@ -1,0 +1,5 @@
+Tool: built-in ImageGen
+References: runner.png, enemy.png
+Prompt: Create a production game sprite atlas on genuinely transparent background. 1536x1024 landscape, exact 4 columns by 2 rows of equal cells. Top row: four consecutive walk cycle frames of the cyan armored rifle soldier in reference 1. Bottom row: four consecutive walk cycle frames of the red core robot reference 2. All full body, same size and baseline within each cell, generous transparent margin, no overlapping cells. Four distinct poses: left foot forward, passing, right foot forward, passing opposite; visibly bent knees and alternating leg positions, coordinated arms. Maintain original realistic metal armor, colors and identity; 3/4 view facing right consistently, no ground, no shadows outside figure, no labels, no grid, no text. Atlas meant to be cropped into equal cells for looping animation.
+
+Output had an opaque checker matte; the app removes connected light-neutral background pixels once at load time.
