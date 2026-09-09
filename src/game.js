@@ -1,0 +1,519 @@
+export const SECTORS = [
+  "BLACK RAIN DISTRICT",
+  "GHOSTLINE TERMINAL",
+  "KINTSUGI ARCOLOGY",
+];
+export const UPGRADES = [
+  {
+    id: "damage",
+    name: "관통 탄두",
+    en: "ARMOR PIERCER",
+    desc: "스마트 라이플 피해량 +35%",
+    icon: "crosshair",
+  },
+  {
+    id: "rate",
+    name: "신경 가속기",
+    en: "NEURAL ACCELERATOR",
+    desc: "자동 사격 속도 +25%",
+    icon: "lightning",
+  },
+  {
+    id: "drone",
+    name: "헌터 드론",
+    en: "HUNTER DRONE",
+    desc: "독립 사격 드론 추가 · 최대 3기",
+    icon: "drone",
+  },
+  {
+    id: "heal",
+    name: "나노 리페어",
+    en: "NANO REPAIR",
+    desc: "체력 45 회복 · 최대 체력 +15",
+    icon: "heart",
+  },
+  {
+    id: "speed",
+    name: "반사 신경 링크",
+    en: "REFLEX LINK",
+    desc: "이동 속도 +15% · 회피 재사용 단축",
+    icon: "dash",
+  },
+  {
+    id: "arc",
+    name: "아크 방전",
+    en: "ARC DISCHARGE",
+    desc: "주기적으로 주변 적에게 전기 방출",
+    icon: "lightning",
+  },
+];
+export function createState() {
+  return {
+    mode: "menu",
+    x: 720,
+    y: 520,
+    hp: 100,
+    maxHp: 100,
+    time: 0,
+    sector: 0,
+    sectorTime: 0,
+    kills: 0,
+    xp: 0,
+    level: 1,
+    nextXp: 8,
+    damage: 18,
+    rate: 1,
+    speed: 205,
+    drones: 0,
+    arc: 0,
+    shot: 0,
+    arcTimer: 0,
+    spawn: 0,
+    dash: 0,
+    dashTime: 0,
+    invuln: 0,
+    heat: 100,
+    enemies: [],
+    bullets: [],
+    gems: [],
+    fx: [],
+    nodes: [
+      { x: 390, y: 325, p: 0 },
+      { x: 1070, y: 430, p: 0 },
+      { x: 650, y: 760, p: 0 },
+    ],
+    keys: new Set(),
+    stick: { x: 0, y: 0 },
+    face: 0,
+    choices: [],
+    notice: "중계기 안에서 버티면 해킹이 진행됩니다.",
+    noticeTime: 7,
+  };
+}
+export function chooseUpgrade(s, id) {
+  if (id === "damage") s.damage *= 1.35;
+  if (id === "rate") s.rate *= 1.25;
+  if (id === "drone") s.drones = Math.min(3, s.drones + 1);
+  if (id === "heal") {
+    s.maxHp += 15;
+    s.hp = Math.min(s.maxHp, s.hp + 45);
+  }
+  if (id === "speed") {
+    s.speed *= 1.15;
+    s.dashCooldown = (s.dashCooldown || 3.2) * 0.9;
+  }
+  if (id === "arc") s.arc++;
+  s.mode = "playing";
+  s.choices = [];
+  s.keys.clear();
+}
+export function dash(s) {
+  if (s.mode !== "playing" || s.dash > 0) return;
+  s.dash = s.dashCooldown || 3.2;
+  s.dashTime = 0.18;
+  s.invuln = 0.4;
+}
+export function overclock(s) {
+  if (s.mode !== "playing" || s.heat < 100) return;
+  s.heat = 0;
+  s.invuln = 1.2;
+  s.fx.push({ x: s.x, y: s.y, life: 0.7, max: 0.7, type: "pulse", r: 430 });
+  for (const e of s.enemies)
+    if (Math.hypot(e.x - s.x, e.y - s.y) < 430) e.hp -= 100 + s.damage * 2;
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+export function step(s, dt, random = Math.random) {
+  if (s.mode !== "playing") return;
+  s.time += dt;
+  s.sectorTime += dt;
+  s.shot -= dt;
+  s.arcTimer -= dt;
+  s.spawn -= dt;
+  s.dash = Math.max(0, s.dash - dt);
+  s.dashTime = Math.max(0, s.dashTime - dt);
+  s.invuln = Math.max(0, s.invuln - dt);
+  s.heat = Math.min(100, s.heat + dt * 4);
+  s.noticeTime -= dt;
+  let dx =
+    (s.keys.has("d") || s.keys.has("arrowright") ? 1 : 0) -
+    (s.keys.has("a") || s.keys.has("arrowleft") ? 1 : 0) +
+    s.stick.x;
+  let dy =
+    (s.keys.has("s") || s.keys.has("arrowdown") ? 1 : 0) -
+    (s.keys.has("w") || s.keys.has("arrowup") ? 1 : 0) +
+    s.stick.y;
+  if (dx || dy) s.target = null;
+  if (s.target) {
+    const tx = s.target.x - s.x,
+      ty = s.target.y - s.y,
+      d = Math.hypot(tx, ty);
+    if (d < 8) s.target = null;
+    else {
+      dx = tx / d;
+      dy = ty / d;
+    }
+  }
+  const length = Math.hypot(dx, dy);
+  if (length > 0) {
+    dx /= Math.max(1, length);
+    dy /= Math.max(1, length);
+    s.face = Math.atan2(dy, dx);
+  }
+  if (s.dashTime > 0 && length === 0) {
+    dx = Math.cos(s.face);
+    dy = Math.sin(s.face);
+  }
+  const speed = s.speed * (s.dashTime > 0 ? 4.5 : 1);
+  s.x = clamp(s.x + dx * speed * dt, 145, 1295);
+  s.y = clamp(s.y + dy * speed * dt, 190, 865);
+  if (s.spawn <= 0 && s.enemies.length < 90) {
+    s.spawn = Math.max(0.18, 0.55 - s.time * 0.001 - s.sector * 0.08);
+    const a = random() * Math.PI * 2;
+    const elite = random() < 0.08 + s.sector * 0.04;
+    const hp = (elite ? 100 : 42) + s.sector * 22 + s.time * 0.13;
+    s.enemies.push({
+      x: 720 + Math.cos(a) * 650,
+      y: 510 + Math.sin(a) * 440,
+      hp,
+      maxHp: hp,
+      speed: (elite ? 39 : 55) + random() * 20 + s.sector * 12,
+      elite,
+      hit: 0,
+    });
+  }
+  const live = s.enemies.filter((e) => e.hp > 0);
+  const nearest = (x, y) =>
+    live
+      .filter((e) => Math.hypot(e.x - x, e.y - y) < 440)
+      .reduce(
+        (best, e) =>
+          !best ||
+          Math.hypot(e.x - x, e.y - y) < Math.hypot(best.x - x, best.y - y)
+            ? e
+            : best,
+        null,
+      );
+  if (s.shot <= 0 && live.length) {
+    s.shot = 0.34 / s.rate;
+    for (let i = 0; i <= s.drones; i++) {
+      const x = s.x + (i ? Math.cos(s.time * 2 + i * 2) * 60 : 0),
+        y = s.y + (i ? Math.sin(s.time * 2 + i * 2) * 40 - 20 : 0),
+        e = nearest(x, y);
+      if (!e) continue;
+      const a = Math.atan2(e.y - y, e.x - x);
+      s.bullets.push({
+        x,
+        y,
+        vx: Math.cos(a) * 790,
+        vy: Math.sin(a) * 790,
+        life: 0.7,
+        damage: s.damage * (i ? 0.6 : 1),
+        drone: i > 0,
+      });
+    }
+  }
+  if (s.arc && s.arcTimer <= 0) {
+    s.arcTimer = 2.5;
+    for (const e of live)
+      if (Math.hypot(e.x - s.x, e.y - s.y) < 160) {
+        e.hp -= 25 * s.arc;
+        s.fx.push({ x: e.x, y: e.y, life: 0.2, max: 0.2, type: "hit" });
+      }
+    s.fx.push({ x: s.x, y: s.y, life: 0.3, max: 0.3, type: "pulse", r: 160 });
+  }
+  for (const b of s.bullets) {
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+    for (const e of live) {
+      if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) < (e.elite ? 30 : 23)) {
+        e.hp -= b.damage;
+        e.hit = 0.09;
+        b.life = 0;
+        s.fx.push({ x: b.x, y: b.y, life: 0.13, max: 0.13, type: "hit" });
+        break;
+      }
+    }
+  }
+  s.bullets = s.bullets.filter((b) => b.life > 0);
+  for (const e of s.enemies) {
+    if (e.hp <= 0) {
+      s.kills++;
+      s.gems.push({ x: e.x, y: e.y, value: e.elite ? 4 : 1 });
+      e.dead = true;
+      continue;
+    }
+    const d = Math.hypot(s.x - e.x, s.y - e.y) || 1;
+    e.x += ((s.x - e.x) / d) * e.speed * dt;
+    e.y += ((s.y - e.y) / d) * e.speed * dt;
+    e.hit = Math.max(0, e.hit - dt);
+    if (d < 30 && s.invuln <= 0) {
+      s.hp -= e.elite ? 18 : 9;
+      s.invuln = 0.65;
+      s.fx.push({ x: s.x, y: s.y, life: 0.3, max: 0.3, type: "hurt" });
+    }
+  }
+  s.enemies = s.enemies.filter((e) => !e.dead);
+  for (const g of s.gems) {
+    const d = Math.hypot(g.x - s.x, g.y - s.y);
+    if (d < 135) {
+      g.x += (s.x - g.x) * dt * 8;
+      g.y += (s.y - g.y) * dt * 8;
+    }
+    if (d < 24) {
+      s.xp += g.value;
+      g.dead = true;
+    }
+  }
+  s.gems = s.gems.filter((g) => !g.dead).slice(-250);
+  for (const n of s.nodes) {
+    if (n.p < 1 && Math.hypot(s.x - n.x, s.y - n.y) < 72) {
+      n.p = Math.min(1, n.p + dt / 8);
+      if (n.p === 1) {
+        s.hp = Math.min(s.maxHp, s.hp + 15);
+        s.notice = "중계기 연결 완료 · 체력 +15";
+        s.noticeTime = 3;
+      }
+    }
+  }
+  s.fx = s.fx.filter((f) => (f.life -= dt) > 0);
+  if (s.hp <= 0) {
+    s.hp = 0;
+    s.mode = "dead";
+    return;
+  }
+  if (s.nodes.every((n) => n.p >= 1)) {
+    s.mode = s.sector === 2 ? "won" : "sector";
+    s.keys.clear();
+    return;
+  }
+  if (s.xp >= s.nextXp) {
+    s.xp -= s.nextXp;
+    s.level++;
+    s.nextXp = Math.round(s.nextXp * 1.3);
+    s.choices = [...UPGRADES]
+      .filter((u) => u.id !== "drone" || s.drones < 3)
+      .sort(() => random() - 0.5)
+      .slice(0, 3);
+    s.mode = "upgrade";
+    s.keys.clear();
+  }
+}
+export function nextSector(s) {
+  s.sector++;
+  s.sectorTime = 0;
+  s.enemies = [];
+  s.bullets = [];
+  s.gems = [];
+  s.x = 720;
+  s.y = 520;
+  s.nodes.forEach((n) => (n.p = 0));
+  s.hp = Math.min(s.maxHp, s.hp + 35);
+  s.heat = 100;
+  s.mode = "playing";
+  s.notice = "새 구역 연결 · 중계기 3개를 확보하세요.";
+  s.noticeTime = 5;
+}
+
+export function render(ctx, s, images, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const scale = Math.max(w / 1440, h / 1024),
+    vw = w / scale,
+    vh = h / scale,
+    cx = clamp(s.x - vw / 2, 0, 1440 - vw),
+    cy = clamp(s.y - vh / 2, 0, 1024 - vh);
+  ctx.save();
+  ctx.scale(scale, scale);
+  ctx.translate(-cx, -cy);
+  const bg =
+    s.sector === 1
+      ? images.terminal
+      : s.sector === 2
+        ? images.arcology
+        : images.bg;
+  if (bg.complete && bg.naturalWidth) ctx.drawImage(bg, 0, 0, 1440, 1024);
+  ctx.fillStyle = "rgba(0,8,15,.22)";
+  ctx.fillRect(0, 0, 1440, 1024);
+  if (s.mode === "menu") {
+    ctx.restore();
+    return;
+  }
+  for (let i = 0; i < 65; i++) {
+    const x = (i * 193 + s.time * 55) % 1440,
+      y = (i * 97 + s.time * 620) % 1024;
+    ctx.strokeStyle = "rgba(160,215,235,.15)";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - 5, y + 20);
+    ctx.stroke();
+  }
+  for (const [i, n] of s.nodes.entries()) {
+    ctx.save();
+    ctx.translate(n.x, n.y);
+    ctx.strokeStyle = n.p >= 1 ? "#6fffc1" : "#5de8f7";
+    ctx.fillStyle = n.p >= 1 ? "rgba(42,255,168,.09)" : "rgba(65,200,244,.07)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 72, 48, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(
+      0,
+      0,
+      72,
+      48,
+      0,
+      -Math.PI / 2,
+      -Math.PI / 2 + Math.PI * 2 * n.p,
+    );
+    ctx.stroke();
+    ctx.fillStyle = "#b7faff";
+    ctx.font = "14px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(n.p >= 1 ? "LINKED" : `RELAY 0${i + 1}`, 0, -60);
+    ctx.font = "12px monospace";
+    ctx.fillText(`${Math.floor(n.p * 100)}%`, 0, 5);
+    ctx.restore();
+  }
+  for (const g of s.gems) {
+    ctx.save();
+    ctx.translate(g.x, g.y);
+    ctx.shadowColor = "#5bf5ff";
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = "#b4ffff";
+    ctx.fillStyle = "#159ec0";
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(5, 0);
+    ctx.lineTo(0, 8);
+    ctx.lineTo(-5, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+  const units = [
+    ...s.enemies.map((e) => ({ ...e, enemy: true })),
+    { x: s.x, y: s.y, player: true },
+  ].sort((a, b) => a.y - b.y);
+  for (const e of units) {
+    const img = e.player ? images.player : images.enemy;
+    const size = e.player ? 94 : e.elite ? 100 : 74;
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    if (e.player) {
+      ctx.strokeStyle = "#66efff";
+      ctx.shadowColor = "#28dfff";
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 14, 29, 16, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      if (s.invuln > 0 && Math.floor(s.time * 16) % 2) ctx.globalAlpha = 0.55;
+    }
+    if (img.complete && img.naturalWidth)
+      ctx.drawImage(img, -size / 2, -size * 0.72, size, size);
+    if (e.enemy) {
+      ctx.fillStyle = "#421f2a";
+      ctx.fillRect(-19, -size * 0.7, 38, 3);
+      ctx.fillStyle = e.elite ? "#ffd165" : "#ff4b66";
+      ctx.fillRect(-19, -size * 0.7, (38 * e.hp) / e.maxHp, 3);
+    }
+    ctx.restore();
+  }
+  for (let i = 0; i < s.drones; i++) {
+    const x = s.x + Math.cos(s.time * 2 + (i + 1) * 2) * 60,
+      y = s.y + Math.sin(s.time * 2 + (i + 1) * 2) * 40 - 20;
+    ctx.save();
+    ctx.shadowColor = "#51ddff";
+    ctx.shadowBlur = 13;
+    ctx.fillStyle = "#aeffff";
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.lineWidth = 2.5;
+  for (const b of s.bullets) {
+    ctx.strokeStyle = b.drone ? "#79ecff" : "#ffdfa8";
+    ctx.shadowColor = b.drone ? "#49e8ff" : "#ff903e";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - b.vx * 0.025, b.y - b.vy * 0.025);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  for (const f of s.fx) {
+    ctx.globalAlpha = f.life / f.max;
+    ctx.strokeStyle = f.type === "hurt" ? "#ff4461" : "#7af4ff";
+    ctx.lineWidth = f.type === "pulse" ? 4 : 2;
+    ctx.beginPath();
+    ctx.arc(
+      f.x,
+      f.y,
+      f.type === "pulse"
+        ? (1 - f.life / f.max) * f.r
+        : 20 * (1 - f.life / f.max),
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  for (const [i, n] of s.nodes.entries()) {
+    if (n.p < 1 && (n.x < cx + 45 || n.x > cx + vw - 45)) {
+      const x = clamp(n.x, cx + 26, cx + vw - 26),
+        y = clamp(n.y, cy + 220, cy + vh - 240);
+      ctx.fillStyle = "#9cf8ff";
+      ctx.font = "bold 17px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(n.x < cx ? "←" : "→", x, y);
+      ctx.font = "12px monospace";
+      ctx.fillText(`0${i + 1}`, x, y + 17);
+    }
+  }
+  ctx.restore();
+  if (w >= 1100) {
+    const x = w - 82,
+      y = 85,
+      r = 58;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#03131bd9";
+    ctx.strokeStyle = "#6cdee766";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.6, 0, Math.PI * 2);
+    ctx.moveTo(-r, 0);
+    ctx.lineTo(r, 0);
+    ctx.moveTo(0, -r);
+    ctx.lineTo(0, r);
+    ctx.stroke();
+    for (const e of s.enemies) {
+      const dx = (e.x - s.x) / 12,
+        dy = (e.y - s.y) / 12;
+      if (Math.hypot(dx, dy) < r - 3) {
+        ctx.fillStyle = e.elite ? "#ffd16e" : "#ff5674";
+        ctx.beginPath();
+        ctx.arc(dx, dy, e.elite ? 3 : 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.fillStyle = "#8effff";
+    ctx.beginPath();
+    ctx.moveTo(0, -5);
+    ctx.lineTo(4, 4);
+    ctx.lineTo(-4, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}

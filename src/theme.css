@@ -1,0 +1,1116 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap");
+:root {
+  font-family: "Rajdhani", "Noto Sans KR", sans-serif;
+  color: #d8f8fb;
+  background: #030a10;
+  font-synthesis: none;
+  --cyan: #76ecf8;
+  --line: #6cdce355;
+  --dim: #83a4b0;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: #061923d9;
+}
+button:hover {
+  border-color: var(--cyan);
+  background: #123c49;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 4px;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+button svg {
+  flex-shrink: 0;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+.game-shell {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100dvh;
+  min-height: 480px;
+  overflow: hidden;
+}
+.game-shell > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+}
+.in-menu:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #020b12a6;
+  z-index: -1;
+}
+.menu-header {
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 4%;
+  border-bottom: 1px solid var(--line);
+}
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  font-size: 17px;
+}
+.wordmark span {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-left: 12px;
+}
+nav {
+  display: flex;
+  align-self: stretch;
+  gap: 35px;
+}
+nav button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 20px 8px;
+  font: 500 13px "Noto Sans KR";
+  color: #9cb4bc;
+}
+nav button.active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+nav small {
+  display: block;
+  font: 500 11px "Rajdhani";
+  letter-spacing: 2px;
+  margin-top: 6px;
+}
+.icon-button {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  background: #041018b3;
+}
+.hero {
+  position: absolute;
+  top: 23%;
+  left: 6%;
+  width: 60%;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2.2px;
+  color: #80d7e5;
+  font-weight: 600;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+h1 {
+  font:
+    700 clamp(65px, 8.5vw, 138px)/0.87 "Barlow Condensed",
+    sans-serif;
+  letter-spacing: -2px;
+  margin: 32px 0 20px;
+  position: relative;
+  display: inline-block;
+}
+h1 span {
+  color: var(--cyan);
+}
+h1 sup {
+  font: 500 14px "Rajdhani";
+  letter-spacing: 1px;
+  position: absolute;
+  right: -30px;
+  top: 0;
+}
+.kicker {
+  font: 500 19px "Noto Sans KR";
+  letter-spacing: 4px;
+  margin: 23px 0;
+}
+.hero-copy {
+  font: 400 13px/1.9 "Noto Sans KR";
+  color: #b2c4cb;
+}
+.start-button {
+  margin-top: 27px;
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  padding: 18px 23px;
+  background: #81eff7;
+  color: #03131d;
+  border: 1px solid #bdffff;
+  font: 700 16px "Noto Sans KR";
+  min-width: 307px;
+  text-align: left;
+  box-shadow: 0 0 36px #4dcddd22;
+}
+.start-button:hover {
+  background: #b4f9ff;
+}
+.start-button > svg:last-child {
+  margin-left: auto;
+}
+.start-button small {
+  display: block;
+  font: 600 10px "Rajdhani";
+  letter-spacing: 2px;
+  margin-top: 5px;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 19px;
+  color: #b0bfc6;
+  font-size: 10px;
+}
+kbd {
+  font: 500 10px "Rajdhani";
+  border: 1px solid #7dd9e24d;
+  padding: 2px 5px;
+  color: #b4dce4;
+  letter-spacing: 0.4px;
+}
+.brief-card {
+  position: absolute;
+  right: 5%;
+  top: 31%;
+  width: 280px;
+  background: #04131bdc;
+  border: 1px solid var(--line);
+  padding: 26px;
+}
+.brief-card .eyebrow {
+  justify-content: space-between;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.contract-rule {
+  height: 2px;
+  background: #6de4ec;
+  width: 34px;
+  margin: 31px 0 25px;
+}
+.brief-card > small {
+  font-size: 10px;
+  color: var(--dim);
+}
+.brief-card h2 {
+  font: 600 28px/1.15 "Rajdhani";
+  letter-spacing: 2px;
+  margin: 10px 0;
+}
+.brief-card p {
+  font: 10px "Noto Sans KR";
+  color: #91aab4;
+}
+dl {
+  margin: 25px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 15px 0;
+}
+dl div {
+  display: flex;
+  justify-content: space-between;
+  margin: 11px 0;
+  font: 10px "Noto Sans KR";
+}
+dt {
+  color: #7899a6;
+}
+dd {
+  margin: 0;
+}
+.red {
+  color: #fa6d86;
+}
+.encrypted {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font: 10px/1.9 "Noto Sans KR";
+  color: #9ab7be;
+}
+.menu-footer {
+  position: absolute;
+  bottom: 0;
+  left: 4%;
+  right: 4%;
+  height: 68px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 38px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #708a97;
+}
+.menu-footer span:first-child {
+  color: var(--cyan);
+}
+.menu-footer b {
+  margin-right: 8px;
+}
+.menu-footer small {
+  margin-left: auto;
+  font-size: 10px;
+}
+.hud-top {
+  position: absolute;
+  top: 23px;
+  left: 23px;
+  right: 23px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  text-shadow: 0 2px 9px #000;
+}
+.vitals {
+  display: flex;
+  gap: 17px;
+  width: 345px;
+}
+.vitals img {
+  width: 80px;
+  height: 95px;
+  object-fit: cover;
+  object-position: 50% 0;
+  border: 1px solid var(--line);
+  background: #04141dc4;
+}
+.vitals > div {
+  flex: 1;
+}
+.hud-brand {
+  letter-spacing: 5px;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 11px;
+}
+.hp-label {
+  display: flex;
+  gap: 12px;
+  font-size: 17px;
+  line-height: 1;
+}
+.hp-label small {
+  margin-left: auto;
+  font-size: 12px;
+  color: #a2dce8;
+}
+.meter {
+  height: 9px;
+  background: #07131cbd;
+  border: 1px solid #afced64d;
+  margin: 7px 0;
+}
+.meter i {
+  height: 100%;
+  display: block;
+}
+.health i {
+  background: #ff4560;
+  box-shadow: 0 0 15px #ff476255;
+}
+.xp {
+  height: 6px;
+}
+.xp i {
+  background: #66eafa;
+}
+.sync-label {
+  font-size: 12px;
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+}
+.sync-label span {
+  color: #9ebfc9;
+  font-size: 10px;
+}
+.timer {
+  text-align: center;
+  min-width: 240px;
+}
+.timer > div {
+  font-size: 19px;
+  letter-spacing: 4px;
+}
+.timer p {
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: #82deeb;
+  margin: 6px 0;
+}
+.timer strong {
+  display: block;
+  font-size: 49px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 3px;
+  color: #aaf8ff;
+}
+.timer > small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-top: 8px;
+  color: #9bbcc6;
+}
+.timer b {
+  color: #d9fbff;
+  font-size: 15px;
+  margin-left: 5px;
+}
+.mission {
+  width: 292px;
+  text-align: right;
+}
+.mission-title {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font: 500 14px "Noto Sans KR";
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.mission-title svg {
+  color: var(--cyan);
+}
+.mission-title b {
+  margin-left: auto;
+}
+.mission-nodes {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin: 12px 0;
+}
+.mission-nodes span {
+  position: relative;
+  border: 1px solid var(--line);
+  width: 48px;
+  height: 25px;
+  text-align: center;
+  line-height: 25px;
+  letter-spacing: 2px;
+  font-size: 12px;
+  background: #03131a9c;
+  overflow: hidden;
+}
+.mission-nodes i {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #7affc7;
+}
+.mission-nodes .linked {
+  color: #7affc7;
+  border-color: #7affc7;
+}
+.mission > small {
+  font: 9px "Noto Sans KR";
+  color: #b2cbd2;
+}
+.top-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+.transmission {
+  position: absolute;
+  bottom: 158px;
+  left: 26px;
+  border-left: 2px solid var(--cyan);
+  padding: 16px 22px;
+  background: #051820d9;
+  font: 12px "Noto Sans KR";
+  max-width: 400px;
+  pointer-events: none;
+}
+.transmission span {
+  display: block;
+  font: 10px "Rajdhani";
+  letter-spacing: 2px;
+  color: var(--cyan);
+  margin-bottom: 9px;
+}
+.bottom-hud {
+  position: absolute;
+  bottom: 26px;
+  left: 26px;
+  right: 26px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.weapon-rack {
+  display: flex;
+  gap: 9px;
+}
+.weapon {
+  height: 104px;
+  border: 1px solid var(--line);
+  background: #051820de;
+  padding: 15px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--cyan);
+}
+.weapon.selected {
+  width: 230px;
+  border-color: #76ebf8;
+}
+.weapon span {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.weapon small {
+  display: block;
+  font-size: 9px;
+  color: #8fadb8;
+  letter-spacing: 1px;
+}
+.weapon b {
+  position: absolute;
+  right: 11px;
+  top: 9px;
+  font-size: 12px;
+  color: #b7cfd7;
+}
+.weapon.compact {
+  width: 78px;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+}
+.weapon.equipped {
+  opacity: 1;
+}
+.battle-controls {
+  font-size: 10px;
+  color: #9ab2bd;
+  white-space: nowrap;
+  padding-bottom: 6px;
+}
+.battle-controls kbd {
+  margin-left: 8px;
+}
+.abilities {
+  display: flex;
+  gap: 12px;
+}
+.abilities button {
+  position: relative;
+  width: 113px;
+  height: 125px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  background: #041821df;
+  color: #b5f7ff;
+  overflow: hidden;
+}
+.abilities strong {
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+.abilities .ready {
+  box-shadow: 0 0 25px #45edff26;
+  border-color: #90f5ff;
+}
+.abilities i {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--cyan);
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #020b13bf;
+  backdrop-filter: blur(9px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal {
+  position: relative;
+  width: 600px;
+  max-height: 90dvh;
+  overflow: auto;
+  background: #061720f5;
+  border: 1px solid #6ad3e078;
+  padding: 42px;
+  box-shadow: 0 25px 100px #0009;
+}
+.modal.wide {
+  width: 900px;
+}
+.modal h2 {
+  font: 600 31px "Noto Sans KR";
+  letter-spacing: -1px;
+  margin: 20px 0;
+}
+.modal > p {
+  color: #9eb8c4;
+  font: 12px/1.9 "Noto Sans KR";
+}
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+.modal-actions button {
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 13px "Noto Sans KR";
+}
+.modal-actions .primary {
+  background: #89eef8;
+  color: #031720;
+}
+.help {
+  margin-top: 24px !important;
+  font-size: 10px !important;
+}
+.upgrade-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 27px;
+}
+.upgrade-grid button {
+  padding: 24px;
+  text-align: left;
+  min-height: 235px;
+}
+.upgrade-grid small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  margin-top: 24px;
+}
+.upgrade-grid h3 {
+  font: 500 18px "Noto Sans KR";
+  margin: 12px 0;
+}
+.upgrade-grid p {
+  font: 11px/1.8 "Noto Sans KR";
+  color: #9db7c1;
+  min-height: 40px;
+}
+.upgrade-grid button > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--cyan);
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-top: 22px;
+}
+.stats {
+  display: flex;
+  gap: 35px;
+  margin: 30px 0;
+}
+.stats strong {
+  font-size: 40px;
+  font-weight: 500;
+  color: var(--cyan);
+  display: block;
+}
+.stats span {
+  font: 10px "Noto Sans KR";
+  color: #9bb6c2;
+}
+.catalog {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-top: 28px;
+}
+.catalog article {
+  display: flex;
+  gap: 12px;
+}
+.catalog svg {
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+.catalog h3 {
+  font: 500 13px "Noto Sans KR";
+  margin: 0 0 3px;
+}
+.catalog small {
+  font-size: 9px;
+  color: var(--cyan);
+}
+.catalog p {
+  font: 10px/1.8 "Noto Sans KR";
+  color: #92afbe;
+}
+.joystick {
+  display: none;
+}
+@media (max-height: 750px) and (min-width: 801px) {
+  .menu-header {
+    height: 78px;
+  }
+  .hero {
+    top: 20%;
+  }
+  h1 {
+    font-size: 88px;
+    margin: 24px 0 12px;
+  }
+  .kicker {
+    font-size: 15px;
+    margin: 16px 0;
+  }
+  .hero-copy {
+    font-size: 11px;
+  }
+  .start-button {
+    margin-top: 18px;
+    padding: 13px 19px;
+  }
+  .brief-card {
+    top: 23%;
+    padding: 22px;
+  }
+  .menu-footer {
+    height: 48px;
+  }
+}
+@media (max-width: 1000px) {
+  .hud-brand {
+    font-size: 13px;
+    letter-spacing: 3px;
+  }
+  .vitals {
+    width: 270px;
+    gap: 10px;
+  }
+  .vitals img {
+    width: 59px;
+    height: 83px;
+  }
+  .timer {
+    min-width: 170px;
+  }
+  .timer p {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .mission {
+    width: 220px;
+  }
+  .mission-title {
+    font-size: 11px;
+  }
+  .battle-controls {
+    display: none;
+  }
+  .brief-card {
+    right: 4%;
+    width: 255px;
+  }
+  .hero {
+    left: 5%;
+    width: 58%;
+  }
+  .wordmark span {
+    display: none;
+  }
+  nav {
+    gap: 14px;
+  }
+  .menu-footer {
+    gap: 18px;
+    font-size: 9px;
+  }
+}
+@media (max-width: 700px) {
+  .game-shell {
+    min-height: 420px;
+  }
+  .menu-header {
+    height: 70px;
+    margin: 0 6%;
+  }
+  .wordmark {
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  .wordmark svg {
+    width: 19px;
+  }
+  nav {
+    gap: 8px;
+  }
+  nav button {
+    font-size: 10px;
+    padding: 10px 5px;
+  }
+  nav small {
+    display: none;
+  }
+  .menu-header > .icon-button {
+    width: 30px;
+    height: 30px;
+  }
+  .hero {
+    top: 20%;
+    left: 7%;
+    width: 86%;
+  }
+  .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1.3px;
+  }
+  h1 {
+    font-size: clamp(72px, 18vw, 114px);
+    margin-top: 30px;
+  }
+  .kicker {
+    font-size: 15px;
+    letter-spacing: 2px;
+  }
+  .hero-copy {
+    font-size: 12px;
+  }
+  .brief-card {
+    display: none;
+  }
+  .start-button {
+    min-width: 285px;
+    margin-top: 30px;
+  }
+  .controls {
+    gap: 5px;
+    font-size: 8px;
+  }
+  .menu-footer {
+    left: 7%;
+    right: 7%;
+    height: 65px;
+  }
+  .menu-footer span:not(:first-child) {
+    display: none;
+  }
+  .menu-footer small {
+    font-size: 8px;
+  }
+  .hud-top {
+    top: 15px;
+    left: 14px;
+    right: 14px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .vitals {
+    width: 55%;
+    gap: 8px;
+  }
+  .vitals img {
+    display: none;
+  }
+  .hud-brand {
+    font-size: 11px;
+    letter-spacing: 2.5px;
+  }
+  .hp-label {
+    font-size: 14px;
+  }
+  .timer {
+    min-width: 0;
+    width: 39%;
+    text-align: right;
+  }
+  .timer > div {
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  .timer p {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+  .timer strong {
+    font-size: 34px;
+  }
+  .timer > small {
+    font-size: 8px;
+  }
+  .mission {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+  }
+  .mission-title {
+    font-size: 10px;
+    gap: 5px;
+    border-bottom: 0;
+    padding: 0;
+  }
+  .mission-title svg {
+    width: 17px;
+  }
+  .mission-title b {
+    margin-left: 6px;
+  }
+  .mission-nodes {
+    margin: 0;
+  }
+  .mission-nodes span {
+    width: 26px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 9px;
+  }
+  .mission > small {
+    display: none;
+  }
+  .top-actions {
+    margin: 0 0 0 auto;
+    gap: 5px;
+  }
+  .top-actions .icon-button {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  .bottom-hud {
+    left: 14px;
+    right: 14px;
+    bottom: 18px;
+    align-items: flex-end;
+  }
+  .weapon-rack {
+    position: fixed;
+    left: 14px;
+    bottom: 145px;
+    gap: 5px;
+  }
+  .weapon.selected {
+    width: 139px;
+    height: 65px;
+    padding: 9px;
+  }
+  .weapon svg {
+    width: 21px;
+    height: 21px;
+  }
+  .weapon span {
+    font-size: 9px;
+  }
+  .weapon small {
+    font-size: 7px;
+  }
+  .weapon.compact {
+    width: 48px;
+    height: 65px;
+    padding: 5px;
+  }
+  .weapon.compact small {
+    font-size: 7px;
+  }
+  .abilities {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .abilities button {
+    width: 77px;
+    height: 94px;
+  }
+  .abilities button svg {
+    width: 28px;
+    height: 28px;
+  }
+  .abilities strong {
+    font-size: 10px;
+  }
+  .abilities kbd {
+    font-size: 8px;
+  }
+  .joystick {
+    display: flex;
+    position: absolute;
+    bottom: 20px;
+    left: 25px;
+    width: 95px;
+    height: 95px;
+    border: 1px solid #8de9f570;
+    border-radius: 50%;
+    background: #071e29ad;
+    align-items: center;
+    justify-content: center;
+    color: #a4e7f2;
+    touch-action: none;
+  }
+  .transmission {
+    left: 14px;
+    bottom: 228px;
+    max-width: 300px;
+    font-size: 10px;
+    padding: 12px;
+  }
+  .modal {
+    padding: 26px;
+    width: 100%;
+  }
+  .modal h2 {
+    font-size: 24px;
+  }
+  .modal > p {
+    font-size: 11px;
+  }
+  .upgrade-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  .upgrade-grid button {
+    min-height: 0;
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 35px 1fr;
+    column-gap: 15px;
+    align-items: center;
+  }
+  .upgrade-grid small {
+    margin: 0;
+    font-size: 8px;
+  }
+  .upgrade-grid h3 {
+    margin: 5px 0;
+    font-size: 15px;
+    grid-column: 2;
+  }
+  .upgrade-grid p {
+    margin: 0;
+    min-height: 0;
+    grid-column: 2;
+    font-size: 10px;
+  }
+  .upgrade-grid button > span {
+    display: none;
+  }
+  .upgrade-grid svg {
+    grid-row: 1/4;
+    width: 29px;
+  }
+  .catalog {
+    gap: 18px;
+    grid-template-columns: 1fr;
+  }
+  .modal-actions button {
+    padding: 12px 15px;
+    font-size: 11px;
+  }
+  .stats {
+    gap: 25px;
+  }
+  .stats strong {
+    font-size: 30px;
+  }
+}
+.game-shell > canvas {
+  z-index: 0;
+}
+.game-shell > :not(canvas) {
+  z-index: 1;
+}
+.game-shell > .overlay {
+  z-index: 5;
+}
+.in-menu:after {
+  z-index: 0;
+  pointer-events: none;
+}
+.menu-header {
+  position: relative;
+}
+@media (min-width: 1100px) {
+  .mission {
+    margin-right: 145px;
+    width: 260px;
+  }
+  .top-actions {
+    position: absolute;
+    right: 0;
+    top: 138px;
+  }
+  .vitals {
+    width: 380px;
+  }
+  .hud-brand {
+    font-size: 18px;
+    letter-spacing: 5px;
+  }
+}
+.weapon.selected .rifle-icon {
+  width: 150px;
+  height: 36px;
+  object-fit: contain;
+  object-position: left center;
+}
+@media (max-width: 700px) {
+  .weapon.selected .rifle-icon {
+    width: 90px;
+    height: 23px;
+  }
+}
