@@ -1,3 +1,6 @@
+import { attackStamp, splash } from './attack-art.js';
+import { RELAY_RADIUS, ENEMY_STYLE, cue, createEnemy, updateEnemy, updateHostileBullets, renderThreats } from './combat.js';
+import { WEAPONS, equipWeapon, rollUpgrades, stepWeapons, renderWeapons } from './weapons.js';
 export const WORLD = { width: 4320, height: 3072 };
 export const SPAWN = { x: 2160, y: 1536 };
 export const SECTORS = [
@@ -5,50 +8,7 @@ export const SECTORS = [
   "GHOSTLINE TERMINAL",
   "KINTSUGI ARCOLOGY",
 ];
-export const UPGRADES = [
-  {
-    id: "damage",
-    name: "관통 탄두",
-    en: "ARMOR PIERCER",
-    desc: "스마트 라이플 피해량 +35%",
-    icon: "crosshair",
-  },
-  {
-    id: "rate",
-    name: "신경 가속기",
-    en: "NEURAL ACCELERATOR",
-    desc: "자동 사격 속도 +25%",
-    icon: "lightning",
-  },
-  {
-    id: "drone",
-    name: "헌터 드론",
-    en: "HUNTER DRONE",
-    desc: "독립 사격 드론 추가 · 최대 3기",
-    icon: "drone",
-  },
-  {
-    id: "heal",
-    name: "나노 리페어",
-    en: "NANO REPAIR",
-    desc: "체력 45 회복 · 최대 체력 +15",
-    icon: "heart",
-  },
-  {
-    id: "speed",
-    name: "반사 신경 링크",
-    en: "REFLEX LINK",
-    desc: "이동 속도 +15% · 회피 재사용 단축",
-    icon: "dash",
-  },
-  {
-    id: "arc",
-    name: "아크 방전",
-    en: "ARC DISCHARGE",
-    desc: "주기적으로 주변 적에게 전기 방출",
-    icon: "lightning",
-  },
-];
+export const UPGRADES = WEAPONS;
 export function createState() {
   return {
     mode: "menu",
@@ -66,19 +26,23 @@ export function createState() {
     level: 1,
     nextXp: 8,
     damage: 18,
-    rate: 1,
     speed: 205,
     drones: 0,
-    arc: 0,
-    shot: 0,
-    arcTimer: 0,
     spawn: 0,
     dash: 0,
     dashTime: 0,
     invuln: 0,
     heat: 100,
     enemies: [],
+    weapons: {},
+    weaponTimers: {},
+    weaponZones: [],
+    weaponFx: [],
     bullets: [],
+    hostileBullets: [],
+    sounds: [],
+    bossSpawned: false,
+    bossDefeated: false,
     gems: [],
     fx: [],
     nodes: [
@@ -95,32 +59,26 @@ export function createState() {
   };
 }
 export function chooseUpgrade(s, id) {
-  if (id === "damage") s.damage *= 1.35;
-  if (id === "rate") s.rate *= 1.25;
-  if (id === "drone") s.drones = Math.min(3, s.drones + 1);
-  if (id === "heal") {
-    s.maxHp += 15;
-    s.hp = Math.min(s.maxHp, s.hp + 45);
-  }
-  if (id === "speed") {
-    s.speed *= 1.15;
-    s.dashCooldown = (s.dashCooldown || 3.2) * 0.9;
-  }
-  if (id === "arc") s.arc++;
+  if (s.mode !== 'upgrade' || !s.choices.some(w => w.id === id)) return false;
+  equipWeapon(s, id);
   s.mode = "playing";
   s.choices = [];
   s.keys.clear();
+  s.stick = { x: 0, y: 0 };
+  cue(s, 'upgrade');
 }
 export function dash(s) {
   if (s.mode !== "playing" || s.dash > 0) return;
   s.dash = s.dashCooldown || 3.2;
   s.dashTime = 0.18;
   s.invuln = 0.4;
+  cue(s, 'dash');
 }
 export function overclock(s) {
   if (s.mode !== "playing" || s.heat < 100) return;
   s.heat = 0;
   s.invuln = 1.2;
+  cue(s, 'overclock');
   s.fx.push({ x: s.x, y: s.y, life: 0.7, max: 0.7, type: "pulse", r: 430 });
   for (const e of s.enemies)
     if (Math.hypot(e.x - s.x, e.y - s.y) < 430) e.hp -= 100 + s.damage * 2;
@@ -130,8 +88,6 @@ export function step(s, dt, random = Math.random) {
   if (s.mode !== "playing") return;
   s.time += dt;
   s.sectorTime += dt;
-  s.shot -= dt;
-  s.arcTimer -= dt;
   s.spawn -= dt;
   s.dash = Math.max(0, s.dash - dt);
   s.dashTime = Math.max(0, s.dashTime - dt);
@@ -163,72 +119,23 @@ export function step(s, dt, random = Math.random) {
   const distance = Math.hypot(s.x - oldX, s.y - oldY);
   s.moving = distance > 0.01;
   s.walk = s.moving ? s.walk + distance / 24 : 0;
-  if (s.spawn <= 0 && s.enemies.length < 90) {
+  if (s.spawn <= 0 && s.enemies.length < 90 && !s.bossSpawned) {
     s.spawn = Math.max(0.18, 0.55 - s.time * 0.001 - s.sector * 0.08);
-    const a = random() * Math.PI * 2;
-    const elite = random() < 0.08 + s.sector * 0.04;
-    const hp = (elite ? 100 : 42) + s.sector * 22 + s.time * 0.13;
-    s.enemies.push({
-      x: clamp(s.x + Math.cos(a) * 820, 40, WORLD.width - 40),
-      y: clamp(s.y + Math.sin(a) * 820, 40, WORLD.height - 40),
-      walk: random() * 4,
-      hp,
-      maxHp: hp,
-      speed: (elite ? 39 : 55) + random() * 20 + s.sector * 12,
-      elite,
-      hit: 0,
-    });
+    s.enemies.push(createEnemy(s, random));
   }
-  const live = s.enemies.filter((e) => e.hp > 0);
-  const nearest = (x, y) =>
-    live
-      .filter((e) => Math.hypot(e.x - x, e.y - y) < 440)
-      .reduce(
-        (best, e) =>
-          !best ||
-          Math.hypot(e.x - x, e.y - y) < Math.hypot(best.x - x, best.y - y)
-            ? e
-            : best,
-        null,
-      );
-  if (s.shot <= 0 && live.length) {
-    s.shot = 0.34 / s.rate;
-    for (let i = 0; i <= s.drones; i++) {
-      const x = s.x + (i ? Math.cos(s.time * 2 + i * 2) * 60 : 0),
-        y = s.y + (i ? Math.sin(s.time * 2 + i * 2) * 40 - 20 : 0),
-        e = nearest(x, y);
-      if (!e) continue;
-      const a = Math.atan2(e.y - y, e.x - x);
-      s.bullets.push({
-        x,
-        y,
-        vx: Math.cos(a) * 790,
-        vy: Math.sin(a) * 790,
-        life: 0.7,
-        damage: s.damage * (i ? 0.6 : 1),
-        drone: i > 0,
-      });
-    }
-  }
-  if (s.arc && s.arcTimer <= 0) {
-    s.arcTimer = 2.5;
-    for (const e of live)
-      if (Math.hypot(e.x - s.x, e.y - s.y) < 160) {
-        e.hp -= 25 * s.arc;
-        s.fx.push({ x: e.x, y: e.y, life: 0.2, max: 0.2, type: "hit" });
-      }
-    s.fx.push({ x: s.x, y: s.y, life: 0.3, max: 0.3, type: "pulse", r: 160 });
-  }
+  stepWeapons(s, dt, random);
+  const live = s.enemies.filter(e => e.hp > 0);
   for (const b of s.bullets) {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.life -= dt;
     for (const e of live) {
-      if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) < (e.elite ? 30 : 23)) {
+      if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) < (e.type === 'boss' ? 48 : e.elite ? 30 : 23)) {
         e.hp -= b.damage;
         e.hit = 0.09;
         b.life = 0;
         s.fx.push({ x: b.x, y: b.y, life: 0.13, max: 0.13, type: "hit" });
+        cue(s, 'hit');
         break;
       }
     }
@@ -237,23 +144,23 @@ export function step(s, dt, random = Math.random) {
   for (const e of s.enemies) {
     if (e.hp <= 0) {
       s.kills++;
+      cue(s, 'kill');
+      if (e.type === 'boss') s.bossDefeated = true;
       s.gems.push({ x: e.x, y: e.y, value: e.elite ? 4 : 1 });
       e.dead = true;
       continue;
     }
-    const d = Math.hypot(s.x - e.x, s.y - e.y) || 1;
-    e.face = Math.atan2(s.y - e.y, s.x - e.x);
-    e.walk += e.speed * dt / 16;
-    e.x += ((s.x - e.x) / d) * e.speed * dt;
-    e.y += ((s.y - e.y) / d) * e.speed * dt;
-    e.hit = Math.max(0, e.hit - dt);
-    if (d < 30 && s.invuln <= 0) {
-      s.hp -= e.elite ? 18 : 9;
-      s.invuln = 0.65;
-      s.fx.push({ x: s.x, y: s.y, life: 0.3, max: 0.3, type: "hurt" });
-    }
+    updateEnemy(s, e, dt);
   }
   s.enemies = s.enemies.filter((e) => !e.dead);
+  updateHostileBullets(s, dt);
+  // Lethal combat damage wins over any relay healing, upgrade, or boss transition.
+  if (s.hp <= 0) {
+    s.hp = 0;
+    s.mode = 'dead';
+    s.keys.clear(); s.stick = { x: 0, y: 0 };
+    return;
+  }
   for (const g of s.gems) {
     const d = Math.hypot(g.x - s.x, g.y - s.y);
     if (d < 135) {
@@ -267,36 +174,42 @@ export function step(s, dt, random = Math.random) {
   }
   s.gems = s.gems.filter((g) => !g.dead).slice(-250);
   for (const n of s.nodes) {
-    if (n.p < 1 && Math.hypot(s.x - n.x, s.y - n.y) < 72) {
+    if (n.p < 1 && ((s.x - n.x) / RELAY_RADIUS.x) ** 2 + ((s.y - n.y) / RELAY_RADIUS.y) ** 2 <= 1) {
       n.p = Math.min(1, n.p + dt / 8);
       if (n.p === 1) {
         s.hp = Math.min(s.maxHp, s.hp + 15);
         s.notice = "중계기 연결 완료 · 체력 +15";
         s.noticeTime = 3;
+        cue(s, 'relay');
       }
     }
   }
   s.fx = s.fx.filter((f) => (f.life -= dt) > 0);
-  if (s.hp <= 0) {
-    s.hp = 0;
-    s.mode = "dead";
-    return;
-  }
   if (s.nodes.every((n) => n.p >= 1)) {
-    s.mode = s.sector === 2 ? "won" : "sector";
-    s.keys.clear();
-    return;
+    if (s.sector < 2 || s.bossDefeated) {
+      s.mode = s.sector === 2 ? 'won' : 'sector';
+      s.keys.clear(); s.stick = { x: 0, y: 0 };
+      cue(s, s.mode === 'won' ? 'victory' : 'relay');
+      return;
+    }
+    if (!s.bossSpawned) {
+      s.bossSpawned = true;
+      s.enemies = [createEnemy(s, random, 'boss')];
+      s.hostileBullets = []; s.bullets = [];
+      s.weaponZones = []; s.weaponFx = []; s.weaponTimers = {};
+      s.notice = '격리망 최종 방어 · 집행관 NULL WARDEN을 처치하세요.';
+      s.noticeTime = 6;
+      cue(s, 'warning');
+    }
   }
   if (s.xp >= s.nextXp) {
     s.xp -= s.nextXp;
     s.level++;
     s.nextXp = Math.round(s.nextXp * 1.3);
-    s.choices = [...UPGRADES]
-      .filter((u) => u.id !== "drone" || s.drones < 3)
-      .sort(() => random() - 0.5)
-      .slice(0, 3);
+    s.choices = rollUpgrades(s, random);
     s.mode = "upgrade";
     s.keys.clear();
+    s.stick = { x: 0, y: 0 };
   }
 }
 export function nextSector(s) {
@@ -304,6 +217,14 @@ export function nextSector(s) {
   s.sectorTime = 0;
   s.enemies = [];
   s.bullets = [];
+  s.hostileBullets = [];
+  s.weaponTimers = {};
+  s.weaponZones = [];
+  s.weaponFx = [];
+  s.bossSpawned = false;
+  s.bossDefeated = false;
+  s.fx = [];
+  s.sounds = [];
   s.gems = [];
   s.x = SPAWN.x;
   s.y = SPAWN.y;
@@ -313,11 +234,11 @@ export function nextSector(s) {
   s.hp = Math.min(s.maxHp, s.hp + 35);
   s.heat = 100;
   s.mode = "playing";
-  s.notice = "새 구역 연결 · 중계기 3개를 확보하세요.";
+  s.notice = s.sector === 2 ? '최종 구역 · 중계기 3개 연결 후 집행관을 처치하세요.' : '새 구역 연결 · 중계기 3개를 확보하세요.';
   s.noticeTime = 5;
 }
 
-export function render(ctx, s, images, w, h) {
+export function render(ctx, s, images, w, h, ambientTime = 0) {
   ctx.clearRect(0, 0, w, h);
   const scale = Math.max(w / 1440, h / 1024),
     vw = w / scale,
@@ -334,7 +255,11 @@ export function render(ctx, s, images, w, h) {
         ? images.arcology
         : images.bg;
   if (bg.complete && bg.naturalWidth) {
-    if (s.mode === "menu") ctx.drawImage(bg, cx, cy, vw, vh);
+    if (s.mode === "menu") {
+      const cover = Math.max(vw / bg.naturalWidth, vh / bg.naturalHeight);
+      const bw = bg.naturalWidth * cover, bh = bg.naturalHeight * cover;
+      ctx.drawImage(bg, cx + (vw - bw) / 2, cy + (vh - bh) / 2, bw, bh);
+    }
     else for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) {
       ctx.save();
       ctx.translate(col * 1440 + (col % 2 ? 1440 : 0), row * 1024 + (row % 2 ? 1024 : 0));
@@ -345,18 +270,19 @@ export function render(ctx, s, images, w, h) {
   }
   ctx.fillStyle = "rgba(0,8,15,.22)";
   ctx.fillRect(0, 0, WORLD.width, WORLD.height);
-  if (s.mode === "menu") {
-    ctx.restore();
-    return;
-  }
+  const rainTime = s.mode === "menu" ? ambientTime : s.time;
   for (let i = 0; i < 65; i++) {
-    const x = cx + (i * 193 + s.time * 55) % vw,
-      y = cy + (i * 97 + s.time * 620) % vh;
+    const x = cx + (i * 193 + rainTime * 55) % vw,
+      y = cy + (i * 97 + rainTime * 620) % vh;
     ctx.strokeStyle = "rgba(160,215,235,.15)";
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x - 5, y + 20);
     ctx.stroke();
+  }
+  if (s.mode === "menu") {
+    ctx.restore();
+    return;
   }
   for (const [i, n] of s.nodes.entries()) {
     ctx.save();
@@ -365,7 +291,7 @@ export function render(ctx, s, images, w, h) {
     ctx.fillStyle = n.p >= 1 ? "rgba(42,255,168,.09)" : "rgba(65,200,244,.07)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 72, 48, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, RELAY_RADIUS.x, RELAY_RADIUS.y, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.lineWidth = 4;
@@ -373,8 +299,8 @@ export function render(ctx, s, images, w, h) {
     ctx.ellipse(
       0,
       0,
-      72,
-      48,
+      RELAY_RADIUS.x,
+      RELAY_RADIUS.y,
       0,
       -Math.PI / 2,
       -Math.PI / 2 + Math.PI * 2 * n.p,
@@ -405,15 +331,25 @@ export function render(ctx, s, images, w, h) {
     ctx.stroke();
     ctx.restore();
   }
+  renderWeapons(ctx, s);
+  renderThreats(ctx, s);
   const units = [
     ...s.enemies.map((e) => ({ ...e, enemy: true })),
     { x: s.x, y: s.y, player: true },
   ].sort((a, b) => a.y - b.y);
   for (const e of units) {
     const img = e.player ? images.player : images.enemy;
-    const size = e.player ? 94 : e.elite ? 100 : 74;
+    const size = e.player ? 94 : e.type === 'boss' ? 164 : e.elite ? 100 : 74;
     ctx.save();
     ctx.translate(e.x, e.y);
+    if (e.enemy && e.type && e.type !== 'soldier') {
+      const style = ENEMY_STYLE[e.type];
+      ctx.strokeStyle = style.color;
+      ctx.lineWidth = e.type === 'boss' ? 3 : 1.5;
+      ctx.beginPath(); ctx.ellipse(0, 12, e.type === 'boss' ? 53 : 27, e.type === 'boss' ? 28 : 15, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.font = `${e.type === 'boss' ? 13 : 11}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = style.color;
+      ctx.fillText(e.type === 'boss' && e.enraged ? '집행관 · 과부하' : style.label, 0, -size * .8 - 8);
+    }
     if (e.player) {
       ctx.strokeStyle = "#66efff";
       ctx.shadowColor = "#28dfff";
@@ -426,6 +362,7 @@ export function render(ctx, s, images, w, h) {
       if (s.invuln > 0 && Math.floor(s.time * 16) % 2) ctx.globalAlpha = 0.55;
     }
     ctx.save();
+    if (e.enemy && e.hit > 0) ctx.filter = 'brightness(1.8)';
     if (Math.cos(e.player ? s.face : e.face) < 0) ctx.scale(-1, 1);
     if (images.walkAtlas) {
       const atlas = images.walkAtlas, fw = atlas.width / 4, fh = atlas.height / 2;
@@ -454,32 +391,13 @@ export function render(ctx, s, images, w, h) {
     ctx.fill();
     ctx.restore();
   }
-  ctx.lineWidth = 2.5;
   for (const b of s.bullets) {
-    ctx.strokeStyle = b.drone ? "#79ecff" : "#ffdfa8";
-    ctx.shadowColor = b.drone ? "#49e8ff" : "#ff903e";
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y);
-    ctx.lineTo(b.x - b.vx * 0.025, b.y - b.vy * 0.025);
-    ctx.stroke();
+    attackStamp(ctx,'bolt',b.drone?'#79ecff':'#ffcf87',b.x,b.y,25,Math.atan2(b.vy,b.vx),1,.65);
   }
-  ctx.shadowBlur = 0;
   for (const f of s.fx) {
-    ctx.globalAlpha = f.life / f.max;
-    ctx.strokeStyle = f.type === "hurt" ? "#ff4461" : "#7af4ff";
-    ctx.lineWidth = f.type === "pulse" ? 4 : 2;
-    ctx.beginPath();
-    ctx.arc(
-      f.x,
-      f.y,
-      f.type === "pulse"
-        ? (1 - f.life / f.max) * f.r
-        : 20 * (1 - f.life / f.max),
-      0,
-      Math.PI * 2,
-    );
-    ctx.stroke();
+    const p=1-f.life/f.max;
+    splash(ctx,f.x,f.y,f.type==='pulse'||f.type==='blast'?f.r:34,p,
+      f.type==='hurt'||f.type==='blast'?'#ff668c':'#7af4ff');
   }
   ctx.globalAlpha = 1;
   for (const [i, n] of s.nodes.entries()) {
@@ -494,5 +412,16 @@ export function render(ctx, s, images, w, h) {
       ctx.fillText(`0${i + 1}`, x, y + 17);
     }
   }
+  const boss = s.enemies.find(e => e.type === 'boss' && e.hp > 0);
+  if (boss && (boss.x < cx + 60 || boss.x > cx + vw - 60 || boss.y < cy + 160 || boss.y > cy + vh - 150)) {
+    const angle = Math.atan2(boss.y - s.y, boss.x - s.x);
+    const arrow = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'][(Math.round(angle / (Math.PI / 4)) + 8) % 8];
+    ctx.fillStyle = '#ffb9d4'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`집행관 ${arrow}`, clamp(boss.x, cx + 60, cx + vw - 60), clamp(boss.y, cy + 165, cy + vh - 160));
+  }
   ctx.restore();
+  if (s.fx.some(f => f.type === 'hurt')) {
+    ctx.fillStyle = 'rgba(255,40,85,.07)'; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,80,110,.45)'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, w - 6, h - 6);
+  }
 }

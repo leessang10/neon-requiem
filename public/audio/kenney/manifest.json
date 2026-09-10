@@ -1,0 +1,146 @@
+[
+  {
+    "file": "laserSmall_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "72b589eadd41781257ac859e4f4d030222e623390e4a1a83f6d05329a6e026f1",
+    "bytes": 7286
+  },
+  {
+    "file": "laserSmall_001.ogg",
+    "pack": "sci-fi",
+    "sha256": "ab87913aba9790a0c5fa173d086267ba521ad522fcad2252271db49988313cf5",
+    "bytes": 7448
+  },
+  {
+    "file": "laserSmall_002.ogg",
+    "pack": "sci-fi",
+    "sha256": "e70139466c3e801358c9041ee17db7ff82c0e9a9cdf44647ad0ea6b9f8458f63",
+    "bytes": 8973
+  },
+  {
+    "file": "laserLarge_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "a56d95794cd732d6c2d66ce488c14cf557fe526c282897c9a77675c2bd9b77e6",
+    "bytes": 25566
+  },
+  {
+    "file": "laserLarge_001.ogg",
+    "pack": "sci-fi",
+    "sha256": "e678aca631495b7dfef4ac625f0349875ccac81a60f538d530e072241af3e4bd",
+    "bytes": 26220
+  },
+  {
+    "file": "laserRetro_001.ogg",
+    "pack": "sci-fi",
+    "sha256": "a0a99efaa755594982d5dfebf3d9cecaed5249bdf1f0de29cf26ca9ea24c191a",
+    "bytes": 12732
+  },
+  {
+    "file": "forceField_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "c2916f2a062c8ddd1aca2826d134fe90847037db31342726ffb0f9097afe339c",
+    "bytes": 25672
+  },
+  {
+    "file": "forceField_001.ogg",
+    "pack": "sci-fi",
+    "sha256": "5574e69dd04e5f59322c5ddffde5978f077b09170ae5e29cec0bd9901828cd90",
+    "bytes": 28947
+  },
+  {
+    "file": "forceField_002.ogg",
+    "pack": "sci-fi",
+    "sha256": "051b0eafc479695af4ca3607d41fd4be41bae7c21f4f9508d004722b09f1bd63",
+    "bytes": 27647
+  },
+  {
+    "file": "spaceEngineLow_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "d7deee8d7217ce63aab802ad7365a59cacfd243392dc1bd03b0a9d454aa494df",
+    "bytes": 99760
+  },
+  {
+    "file": "thrusterFire_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "0fdc474d93f209debf1fc4ea77765a669dcb7676db31b4d8a0a509685bccf374",
+    "bytes": 201216
+  },
+  {
+    "file": "explosionCrunch_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69",
+    "bytes": 28274
+  },
+  {
+    "file": "explosionCrunch_001.ogg",
+    "pack": "sci-fi",
+    "sha256": "fdd04d6f0032d4d57c134ad37f3587d2d00e58c9572715275bd8cf4f43593576",
+    "bytes": 47916
+  },
+  {
+    "file": "explosionCrunch_002.ogg",
+    "pack": "sci-fi",
+    "sha256": "be2b8ddc62e4a24c91e2e77793de98549ce216faf2f323a917e7d6f34321ff97",
+    "bytes": 47907
+  },
+  {
+    "file": "lowFrequency_explosion_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "3cb48d86dab63140cfb9aaeea4d4a6846abaca5831d157d8adbec0490da26343",
+    "bytes": 14317
+  },
+  {
+    "file": "impactMetal_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "956c6612a256aa1a67a2327fffe2454f6b1d82e4c1c2be28fd66916335d5b1d6",
+    "bytes": 15491
+  },
+  {
+    "file": "impactMetal_001.ogg",
+    "pack": "sci-fi",
+    "sha256": "4a2b76f20052819c6ace57cc5ba55ec58deffcf74e3ed30694d619c582cc8e8e",
+    "bytes": 15305
+  },
+  {
+    "file": "impactMetal_002.ogg",
+    "pack": "sci-fi",
+    "sha256": "0c1bb4db8a4d48b2b8c2e65a175d9056b845f1063837599995d81be1c5957d2c",
+    "bytes": 12708
+  },
+  {
+    "file": "computerNoise_000.ogg",
+    "pack": "sci-fi",
+    "sha256": "1527944e16eb14b48ee03fe3e7ce6aae94262833a4e1f83928d451a7414fe4e1",
+    "bytes": 119024
+  },
+  {
+    "file": "confirmation_001.ogg",
+    "pack": "interface",
+    "sha256": "063564703b6094d70718a3e787a55cc9141611e4ecd6b6637f8828f79b4a8c3a",
+    "bytes": 8968
+  },
+  {
+    "file": "confirmation_002.ogg",
+    "pack": "interface",
+    "sha256": "33b17a9a9a2397c62b285c52c33a907fdffb476909c99e42dde603f6a7a8b12c",
+    "bytes": 14169
+  },
+  {
+    "file": "confirmation_004.ogg",
+    "pack": "interface",
+    "sha256": "568967a3d9f8a8f6af54ea01729c4882284308f2a27d78c07ffd7ee0d6951661",
+    "bytes": 12391
+  },
+  {
+    "file": "select_001.ogg",
+    "pack": "interface",
+    "sha256": "aec0c31ea934a35936ae0d2ab8fac8123c93aa5647f935853a58dbaf90278b7a",
+    "bytes": 5468
+  },
+  {
+    "file": "error_001.ogg",
+    "pack": "interface",
+    "sha256": "46e67425d16339772e8d328fb36a49426c9467418686e11beeb71ff84b0f6433",
+    "bytes": 7373
+  }
+]

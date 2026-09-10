@@ -1,5 +1,28 @@
 # NEON REQUIEM visual and interaction QA
 
+## Multi-weapon follow-up — 2026-09-11
+
+- New runs receive exactly one random weapon from seven types. Rifle is no longer implicit. The 3-card level-up pool contains only new equipment and owned-weapon upgrades, with both categories represented whenever possible. Multiple weapons coexist; all-owned runs still receive three upgrade options.
+- Added periodic 360-degree monowire, player-centered EMP with enemy stun/projectile clearing, anchored gravity DOT/pull, and randomized orbital strikes with a 20% boosted volley. Rifle, autonomous drone and chain arc share the same equipment and upgrade flow.
+- Verified actual upgrade cards at desktop 1280×720 and mobile 390×844. All three cards fit; new/upgrade labels and current/next stats remain legible. Clicking new EMP retained monowire LV.1 and added EMP LV.1. Reloading the fixture and selecting monowire upgrade produced only monowire LV.2. Verified through the actual pause inventory.
+- Inspected engine-generated simultaneous effects and boosted orbital beams in the mobile fixture. Effects retain transparent centers and distinct colors; HP/XP HUD remains unchanged. Restored the viewport after inspection.
+- Fresh normal game began with gravity well alone, confirmed in pause inventory, and killed an enemy without a hidden rifle. No warnings/errors in the fresh verification tab.
+- Automated tests cover all seven sole starters, simultaneous weapon execution, distinct mixed offers, repeat-click protection, high-rank/all-owned upgrades, persisted loadout/cleared transient effects, melee timing/current origin, EMP interruption/bullet clearing, gravity time-based damage and boss pull resistance, non-repeating chain targets, delayed randomized orbital strikes and increased boosted damage, pause behavior, XP and audio cues.
+- Remaining tuning: full campaign difficulty and long-run balance across seven different starters. Weapon visuals are procedural Canvas effects over the existing walk-cycle art.
+
+## Current combat update — 2026-09-11
+
+- Preserved the selected art, four-frame walking sprites, full-width HP/XP rows, WASD/joystick and edge-aligned actions.
+- Relay capture and rendering share the same 72×48 ellipse. Capture is cumulative, with 8 seconds required.
+- Added charger paths, gunner aiming lines and bomber blast warnings. The final relay set summons NULL WARDEN; boss death is required for victory. Added phase-two attacks, compact boss HP and off-screen direction.
+- Added event-driven combat cues under the existing mute toggle while retaining the ambient bed. Scheduling is throttled, voices are capped, and mute drops pending effects.
+- Inspected the actual App/renderer through `tests/combat-preview.html`: boss fan at desktop 1280×720, targeted blast and three enemy types at 390×844. These are frozen fixtures for visibility, not a full manual campaign playthrough. Temporary viewport was reset afterward.
+- Fresh live game browser check: start, sound toggle, dash, overclock, auto fire/kill/damage, pause and revised Korean help. No errors or warnings in the fresh verification tab. Development hot reload initially retained pre-change game state; reloading initialized the new state correctly.
+- Engine tests cover telegraph timing, locked directions, dodge/kill counterplay, projectile invulnerability, boss spawning/phase/victory, off-screen marker, and lethal damage taking precedence over same-frame relay healing. Audio tests cover mute, burst throttling and ambient lifecycle.
+- Limitations: existing enemy art is differentiated by size, labeled colored rings and attack shapes; dedicated enemy artwork, long-run balancing and physical-device audio listening remain follow-ups.
+
+The sections below are historical initial-prototype QA. Their radar, weapon-rack and click-to-move descriptions were superseded by the confirmed gameplay refinements in AGENTS.md.
+
 Source visual truth: `C:/Users/codecrain/.codex/generated_images/01a08414-8d46-7642-ba3d-cb78f7c7f557/exec-bb3a9c27-809c-4b8e-a96c-948774059424.png`.
 
 Implementation: `http://127.0.0.1:4173/`.
@@ -43,3 +66,19 @@ Engine: six automated tests pass for frame-rate independent movement, pause, abi
 - P3: additional device sizes, longer playtesting and tuning of late-sector difficulty.
 
 final result: passed
+
+## Game title screen — 2026-09-11
+
+Replaced the landing-page header, promotional section, and briefing card with a centered logo and vertical Start / Arsenal / Records menu. Preserved the Seoul battlefield art; background now covers the viewport without distortion and rain animates independently of gameplay time.
+
+Verified in browser at desktop, 390×844 portrait, and 844×390 landscape. Arrow keys and Enter open the arsenal, Escape restores menu focus, records open correctly, and Enter starts a run with one weapon. Short landscape layout fits without scrolling. Production build and all 43 automated tests pass, including backdrop/rain and Sites worker checks.
+
+## Attack splash artwork — 2026-09-11
+
+Replaced plain attack strokes with cached transparent raster stamps: layered cyan crescents, blue shockwaves, purple vortex fragments, gold orbital impacts, electric chain splashes, and hostile plasma trails. Enemy telegraphs retain exact circular blast boundaries with translucent directional lanes and moving charge trails. Gameplay damage, cooldowns and collision calculations are unchanged. The deterministic artwork does not consume gameplay RNG.
+
+Browser fixture: `/tests/fixtures/attack-preview.html`, showing all attack families together against the actual battlefield with pause/resume. The fixture is outside the production entry point. Production build and 43 existing tests pass.
+
+## CC0 sampled audio — 2026-09-11
+
+Replaced oscillator cues and ambience with 24 unmodified Kenney CC0 OGG files. Sources, pack licenses and SHA-256 hashes are retained. Browser fixture reported 24/24 decoded with no errors; sample playback and mute released active voices. Production build and 45 automated tests pass, including asset integrity, cue coverage, concurrency limits, loading failure/retry and mute/dispose races. Physical-device listening and subjective mix balance remain unverified.

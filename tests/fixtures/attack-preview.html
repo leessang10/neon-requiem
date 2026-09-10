@@ -1,0 +1,11 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>공격 이펙트 검증</title><style>body{margin:0;background:#04101a;color:#d9faff;font-family:sans-serif}canvas{width:100%;display:block}button{position:fixed;right:20px;top:15px;padding:10px}</style><canvas width="1440" height="960"></canvas><button>정지 / 재생</button><script type="module">
+import {renderWeapons} from '/src/weapons.js';
+import {renderThreats} from '/src/combat.js';
+import {splash} from '/src/attack-art.js';
+const c=document.querySelector('canvas').getContext('2d'),bg=new Image();bg.src='/assets/battlefield.png';
+let time=.18,paused=false,last=performance.now();document.querySelector('button').onclick=()=>paused=!paused;
+function frame(now){if(!paused)time+=(now-last)/1000;last=now;c.clearRect(0,0,1440,960);if(bg.complete&&bg.naturalWidth)c.drawImage(bg,0,0,1440,960);c.fillStyle='#020914ac';c.fillRect(0,0,1440,960);
+const p=(time%1.4)/1.4,life=1-p;
+const s={time,weaponZones:[{kind:'gravity',x:180,y:480,r:125,life:2,max:2.6},{kind:'strike',x:900,y:480,r:115,life,max:1}],weaponFx:[{kind:'wire',x:180,y:180,r:125,life,max:1},{kind:'emp',x:540,y:180,r:125,life,max:1},{kind:'orbital',x:900,y:180,r:115,life,max:1,boosted:true},{kind:'arc',x:1260,y:180,life,max:1,points:[{x:1140,y:130},{x:1310,y:180},{x:1200,y:240}]}],enemies:[{type:'charger',x:60,y:770,aim:0,phase:p>.7?'charge':'windup'},{type:'boss',x:470,y:780,aim:0,phase:'windup',attack:'shot'},{type:'bomber',x:1260,y:480,phase:'windup',timer:life,windupDuration:1}],hostileBullets:[{x:800+p*300,y:780,vx:250,vy:0}]};renderWeapons(c,s);renderThreats(c,s);splash(c,540,480,125,p,'#ff668c');
+c.fillStyle='#c9f3ff';c.font='bold 18px sans-serif';c.textAlign='center';['모노와이어','EMP 노바','궤도 강습','아크 방전','중력 우물','적 폭발','궤도 조준','적 폭발 예고','돌진 예고 / 잔상','보스 탄막 예고','적 플라즈마 탄환'].forEach((t,i)=>{const x=i<8?180+(i%4)*360:180+(i-8)*450;const y=i<8?330+Math.floor(i/4)*300:900;c.fillText(t,x,y)});requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script></html>

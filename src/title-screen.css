@@ -1,0 +1,80 @@
+.game-shell.in-menu { min-height: 0; }
+.game-shell.in-menu::after {
+  background: radial-gradient(ellipse at 50% 43%, #04131b12 10%, #02070ecc 100%), linear-gradient(180deg, #010b1566, #03111b55 45%, #010710d9);
+}
+.title-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 70px 24px;
+  text-align: center;
+}
+.title-location { position: absolute; left: 36px; top: 32px; color: #c7e5e9; font: 600 12px 'Rajdhani', sans-serif; letter-spacing: 4px; text-align: left; }
+.title-location span { display: block; margin-top: 6px; color: #75929f; font-size: 9px; letter-spacing: 2px; }
+.title-sound { position: absolute; right: 32px; top: 27px; display: flex; align-items: center; gap: 9px; padding: 8px; border: 0; background: transparent; color: #adced7; }
+.title-sound span { font-size: 10px; letter-spacing: 1px; }
+.title-sound:hover { background: #6addf112; }
+.title-core { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 840px; }
+.title-logo { width: 100%; filter: drop-shadow(0 8px 25px #000a); }
+.title-prologue { margin: 0 0 18px; color: #b0c9d3; font-size: 11px; letter-spacing: 5px; }
+.title-logo h1 { display: block; margin: 0; font: italic 700 clamp(72px, 12vw, 150px)/.79 'Barlow Condensed', sans-serif; letter-spacing: -2px; }
+.title-logo h1 span { display: block; }
+.title-logo h1 .title-neon { color: #e8faff; font-size: .72em; letter-spacing: .15em; padding-left: .15em; text-shadow: -2px 0 #78e9ff55, 3px 1px #f9418e44; }
+.title-logo h1 .title-requiem { margin-top: .14em; color: #7feaf5; text-shadow: -2px 0 #c4faff, 3px 2px #f347965c, 0 0 38px #27bdd235; }
+.title-korean { margin: 24px 0 0; color: #aad0dc; font-size: 11px; letter-spacing: 8px; padding-left: 8px; }
+.title-menu { display: flex; flex-direction: column; align-self: center; width: min(340px, 100%); gap: 4px; margin-top: clamp(28px, 5vh, 64px); }
+.title-menu button { position: relative; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 18px; background: transparent; border: 1px solid transparent; color: #9db7c4; font: 500 15px 'Noto Sans KR', sans-serif; transition: color .15s, background .15s, border-color .15s; }
+.title-menu button svg { width: 16px; height: 16px; opacity: 0; color: #9efff0; }
+.title-menu button small { margin: 0 0 0 auto; display: block; font: 500 10px 'Rajdhani', sans-serif; letter-spacing: 2px; color: #7495a5; }
+.title-menu .title-start { color: #d6fff9; font-size: 18px; font-weight: 700; min-height: 56px; margin-bottom: 5px; }
+.title-menu .title-start svg { opacity: 1; }
+.title-menu button:is(:hover, :focus-visible) { color: #eafffb; border-color: #6defde55; background: linear-gradient(90deg, #50eadc24, #50eadc06); outline: none; box-shadow: inset 3px 0 #8ffbea; }
+.title-menu button:is(:hover, :focus-visible) svg { opacity: 1; }
+.title-menu button:is(:hover, :focus-visible) small { color: #b3f1ee; }
+.title-menu:focus-within .title-start:not(:focus) svg { opacity: 0; }
+.title-menu button:disabled { opacity: .5; }
+.title-run-rule { margin: 22px 0 0; font-size: 10px; color: #849ba9; letter-spacing: 1px; }
+.title-footer { position: absolute; bottom: 27px; left: 36px; right: 36px; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #87a4b4; font-size: 10px; }
+.title-input-hint { display: flex; align-items: center; gap: 7px; }
+.title-input-hint kbd { border-color: #718fa640; color: #acc5d3; font-size: 10px; padding: 3px 6px; }
+.title-input-hint kbd:nth-of-type(2) { margin-left: 12px; }
+.title-version { display: flex; align-items: center; gap: 12px; font-size: 9px; letter-spacing: 2px; }
+.title-version i { width: 3px; height: 3px; border-radius: 50%; background: #50cbbd; }
+.title-touch-hint { display: none; }
+@media (max-width: 700px) {
+  .title-location { left: 22px; top: 25px; font-size: 10px; letter-spacing: 3px; }
+  .title-location span { font-size: 8px; letter-spacing: 1px; }
+  .title-sound { right: 17px; top: 19px; }
+  .title-sound span { font-size: 9px; }
+  .title-prologue { font-size: 10px; letter-spacing: 3px; }
+  .title-logo h1 { font-size: clamp(68px, 19vw, 118px); }
+  .title-korean { font-size: 10px; letter-spacing: 5px; margin-top: 20px; }
+  .title-menu { width: min(290px, 100%); margin-top: 45px; }
+  .title-footer { left: 22px; right: 22px; bottom: 22px; }
+  .title-input-hint { display: none; }
+  .title-touch-hint { display: block; font-size: 9px; }
+  .title-version { font-size: 8px; letter-spacing: 1px; gap: 8px; }
+  .title-run-rule { font-size: 9px; letter-spacing: .5px; }
+}
+@media (max-height: 600px) {
+  .title-screen { padding-top: 58px; padding-bottom: 48px; }
+  .title-logo h1 { font-size: clamp(60px, 15vh, 90px); }
+  .title-prologue { margin-bottom: 12px; }
+  .title-korean { margin-top: 14px; }
+  .title-menu { margin-top: 20px; gap: 0; }
+  .title-menu button { min-height: 38px; padding-block: 6px; }
+  .title-menu .title-start { min-height: 44px; margin-bottom: 0; }
+  .title-run-rule { margin-top: 10px; }
+}
+@media (max-height: 440px) {
+  .title-screen { padding-top: 45px; padding-bottom: 35px; }
+  .title-prologue, .title-run-rule { display: none; }
+  .title-logo h1 { font-size: 54px; }
+  .title-korean { margin-top: 12px; font-size: 9px; }
+  .title-menu { margin-top: 14px; }
+  .title-location { top: 18px; }
+  .title-sound { top: 12px; }
+  .title-footer { bottom: 12px; }
+}

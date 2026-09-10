@@ -1115,6 +1115,37 @@ dd {
   }
 }
 /* Compact battle HUD: two full-width status rows, unobstructed battlefield. */
+.starter-hint { color: #92b4c4; font-size: 11px; max-width: 360px; line-height: 1.7; margin-top: 14px; }
+.upgrade-grid .choice-kind { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: #87f4df; font-size: 11px; margin-top: 18px; }
+.choice-kind b { font: 600 11px monospace; white-space: nowrap; }
+.upgrade-grid .weapon-upgrade .choice-kind { color: #dfbaff; }
+.upgrade-grid .weapon-new { border-color: #72e8d966; }
+.upgrade-grid .weapon-upgrade { border-color: #bf8aff66; }
+.upgrade-grid .choice-kind + small { margin-top: 12px; }
+.weapon-comparison { display: grid; gap: 5px; font-size: 11px; line-height: 1.6; margin: 14px 0; }
+.weapon-comparison del { color: #91a4b2; font-size: 10px; }
+.weapon-comparison strong { color: #defff5; font-weight: 500; }
+.owned-weapons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 25px; padding-top: 16px; border-top: 1px solid #9ac4dd26; }
+.owned-weapons h3 { grid-column: 1/-1; margin: 0; font-size: 12px; color: #bdd6e4; font-weight: 500; }
+.owned-weapons > div { display: flex; align-items: center; gap: 10px; color: #9ee9f6; }
+.owned-weapons b { font-size: 11px; font-weight: 500; }
+.owned-weapons em { font: 10px monospace; color: #c3a6ef; margin-left: 5px; }
+.owned-weapons small { display: block; color: #99afbe; font-size: 10px; line-height: 1.6; margin-top: 3px; }
+@media (max-width: 700px) {
+  .starter-hint { font-size: 10px; max-width: 290px; }
+  .upgrade-grid .choice-kind { grid-column: 2; margin: 0 0 5px; font-size: 10px; }
+  .upgrade-grid .choice-kind + small { grid-column: 2; margin: 0; }
+  .upgrade-grid .weapon-comparison { grid-column: 2; margin: 8px 0 0; font-size: 10px; }
+  .upgrade-grid svg { grid-row: 1/5; }
+  .owned-weapons { grid-template-columns: 1fr; }
+}
+.boss-strip { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 7px 10px; border: 1px solid #f076a442; background: #180f20d9; font-size: 10px; color: #ffd9e8; }
+.boss-strip span { white-space: nowrap; letter-spacing: 1px; }
+.boss-strip b { color: #ff82b0; margin-left: 6px; font-weight: 400; }
+.boss-strip > div { position: relative; flex: 1; height: 4px; overflow: hidden; background: #432237; }
+.boss-strip i { display: block; height: 100%; background: linear-gradient(90deg, #e05281, #ffafd0); transition: width 100ms linear; }
+.boss-strip strong { min-width: 30px; text-align: right; }
+.game-shell .transmission.with-boss { top: 145px; }
 .simple-hud { position: absolute; inset: 0 0 auto; pointer-events: none; }
 .status-bars { display: grid; gap: 2px; background: #020c12; }
 .status-bar { height: 23px; position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; overflow: hidden; background: #151d28ed; font-size: 11px; letter-spacing: 1px; }

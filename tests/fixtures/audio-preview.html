@@ -1,0 +1,7 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>CC0 효과음 검증</title><style>body{background:#05121e;color:#c9faff;font:16px sans-serif;padding:28px}button{padding:12px;margin:5px;background:#163346;color:white;border:1px solid #528c9b}pre{white-space:pre-wrap}</style><h1>Kenney CC0 효과음</h1><button id="enable">음향 켜기</button><button id="mute">음소거</button><p id="status">대기</p><div id="cues"></div><pre id="report"></pre><script type="module">
+import {createCombatAudio,AUDIO_CUES} from '/src/audio.js';let audio;
+const status=()=>{const s=audio?.status();document.querySelector('#status').textContent=s?`로드 ${s.loaded}/${s.total} · ${s.muted?'OFF':'ON'}`:'대기';document.querySelector('#report').textContent=JSON.stringify(s,null,2)};
+document.querySelector('#enable').onclick=async()=>{audio??=createCombatAudio(new AudioContext());await audio.setMuted(false);status();};
+document.querySelector('#mute').onclick=async()=>{await audio?.setMuted(true);status();};
+for(const name of Object.keys(AUDIO_CUES)){const b=document.createElement('button');b.textContent=name;b.onclick=()=>{audio?.play([name]);status();};document.querySelector('#cues').append(b);}
+</script></html>

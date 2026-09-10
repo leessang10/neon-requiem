@@ -37,18 +37,19 @@ test("dash cooldown and overclock cannot be spammed", () => {
   overclock(s);
   assert.equal(s.enemies[0].hp, hp);
 });
-test("XP pauses combat for three upgrade choices, healing is capped", () => {
+test("XP pauses combat for three weapon choices and the chosen weapon is equipped", () => {
   const s = playing();
   s.xp = 8;
   step(s, 0.01, () => 0.4);
   assert.equal(s.mode, "upgrade");
   assert.equal(s.level, 2);
   assert.equal(s.choices.length, 3);
-  chooseUpgrade(s, "heal");
+  const chosen = s.choices[0].id;
+  chooseUpgrade(s, chosen);
   assert.equal(s.mode, "playing");
-  assert.equal(s.hp, 115);
+  assert.equal(s.weapons[chosen], 1);
 });
-test("relay progress persists on exit; three captures advance and last sector wins", () => {
+test("relay progress persists on exit; three captures advance and final sector requires the boss", () => {
   const s = playing();
   s.x = s.nodes[0].x;
   s.y = s.nodes[0].y;
@@ -69,6 +70,9 @@ test("relay progress persists on exit; three captures advance and last sector wi
   assert.equal(s.nodes[0].p, 0);
   s.sector = 2;
   s.nodes.forEach((n) => (n.p = 1));
+  step(s, 0.01);
+  assert.equal(s.mode, 'playing');
+  s.enemies.find(e => e.type === 'boss').hp = 0;
   step(s, 0.01);
   assert.equal(s.mode, "won");
 });

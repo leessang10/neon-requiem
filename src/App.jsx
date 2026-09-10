@@ -1,4 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createCombatAudio } from './audio.js';
+import { TitleScreen } from './TitleScreen.jsx';
+import { WEAPONS, grantStarterWeapon, weaponSummary } from './weapons.js';
 import {
   Crosshair,
   Lightning,
@@ -10,9 +13,11 @@ import {
   ArrowUpRight,
   X,
   Drone,
-  ShieldCheck,
   ArrowCounterClockwise,
-  Heart,
+  Sword,
+  Waves,
+  Spiral,
+  Planet,
 } from "@phosphor-icons/react";
 import {
   createState,
@@ -22,20 +27,24 @@ import {
   overclock,
   chooseUpgrade,
   nextSector,
-  SECTORS,
   UPGRADES,
 } from "./game";
 const ICONS = {
   crosshair: Crosshair,
   lightning: Lightning,
   drone: Drone,
-  heart: Heart,
   dash: CaretDoubleRight,
+  sword: Sword,
+  waves: Waves,
+  spiral: Spiral,
+  planet: Planet,
 };
 const time = (t) =>
   `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-export function App() {
-  const engine = useRef(createState()),
+export function App({ initialState = createState } = {}) {
+  const engine = useRef(null);
+  if (!engine.current) engine.current = initialState();
+  const
     canvas = useRef(null),
     audio = useRef(null),
     [s, setS] = useState({ ...engine.current }),
@@ -52,6 +61,9 @@ export function App() {
     }),
     [loaded, setLoaded] = useState(false);
   const refresh = () => setS({ ...engine.current });
+  useEffect(() => {
+    if (loaded && s.mode === "menu") document.querySelector(".title-start")?.focus({ preventScroll: true });
+  }, [loaded, s.mode]);
   useEffect(() => {
     let stopped = false,
       frame,
@@ -109,6 +121,8 @@ export function App() {
       const st = engine.current,
         before = st.mode;
       step(st, dt);
+      const events = st.sounds.splice(0);
+      if (events.length) audio.current?.play(events);
       const c = canvas.current;
       if (c) {
         const dpr = Math.min(devicePixelRatio, 2),
@@ -120,7 +134,7 @@ export function App() {
         }
         const ctx = c.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        render(ctx, st, imgs, w, h);
+        render(ctx, st, imgs, w, h, now / 1000);
       }
       if (now - lastUI > 80 || before !== st.mode) {
         setS({ ...st });
@@ -207,34 +221,29 @@ export function App() {
   }, [s.mode, panel]);
   useEffect(
     () => () => {
-      audio.current?.close();
+      audio.current?.dispose().catch(() => {});
+      audio.current = null;
     },
     [],
   );
-  const sound = () => {
-    const next = !muted;
-    setMuted(next);
-    if (!audio.current) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      const ac = new AC();
-      audio.current = ac;
-      const gain = ac.createGain();
-      gain.gain.value = 0.025;
-      gain.connect(ac.destination);
-      [55, 82.41, 110].forEach((hz, i) => {
-        const o = ac.createOscillator();
-        o.type = i ? "sine" : "triangle";
-        o.frequency.value = hz;
-        o.connect(gain);
-        o.start();
-      });
+  const sound = async () => {
+    try {
+      if (!audio.current) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audio.current = createCombatAudio(new AC());
+      }
+      const enabled = await audio.current.setMuted(!muted);
+      setMuted(!enabled);
+      if (enabled) audio.current.play(['upgrade']);
+    } catch {
+      setMuted(true);
     }
-    if (next) audio.current.suspend();
-    else audio.current.resume();
   };
   const start = () => {
+    audio.current?.play(['ui']);
     engine.current = createState();
+    grantStarterWeapon(engine.current);
     engine.current.mode = "playing";
     setPanel(null);
     refresh();
@@ -257,6 +266,7 @@ export function App() {
       d = Math.max(1, Math.hypot(x, y));
     engine.current.stick = { x: x / d, y: y / d };
   };
+  const boss = s.enemies.find(e => e.type === 'boss' && e.hp > 0);
   return (
     <main className={`game-shell ${s.mode === "menu" ? "in-menu" : ""}`}>
       <canvas
@@ -265,104 +275,7 @@ export function App() {
 
       />
       {s.mode === "menu" ? (
-        <>
-          <header className="menu-header">
-            <a className="wordmark" href="#">
-              <Crosshair size={24} /> NEON REQUIEM<span>NR—01</span>
-            </a>
-            <nav>
-              <button
-                className={!panel ? "active" : ""}
-                onClick={() => setPanel(null)}
-              >
-                작전<small>CAMPAIGN</small>
-              </button>
-              <button onClick={() => setPanel("armoury")}>
-                암시장<small>BLACK MARKET</small>
-              </button>
-              <button onClick={() => setPanel("archives")}>
-                기록<small>ARCHIVES</small>
-              </button>
-            </nav>
-            <button
-              className="icon-button"
-              onClick={sound}
-              aria-label={muted ? "음향 켜기" : "음향 끄기"}
-            >
-              {muted ? <SpeakerSlash /> : <SpeakerHigh />}
-            </button>
-          </header>
-          <section className="hero">
-            <div className="eyebrow">CONNECTION ESTABLISHED / SEOUL SECTOR</div>
-            <h1>
-              NEON
-              <br />
-              <span>REQUIEM</span>
-              <sup>01</sup>
-            </h1>
-            <p className="kicker">네온 아래, 마지막 자유.</p>
-            <p className="hero-copy">
-              도시는 당신을 지웠다.
-              <br />
-              이제 당신이 도시의 규칙을 지울 차례다.
-            </p>
-            <button className="start-button" disabled={!loaded} onClick={start}>
-              <Crosshair size={26} />
-              <span>
-                {loaded ? "도시에 접속한다" : "전장 불러오는 중"}
-                <small>JACK INTO THE CITY</small>
-              </span>
-              <ArrowUpRight size={25} />
-            </button>
-            <div className="controls">
-              <kbd>W A S D</kbd> 이동 <kbd>SHIFT</kbd> 회피 <kbd>SPACE</kbd>{" "}
-              오버클럭
-            </div>
-          </section>
-          <aside className="brief-card">
-            <div className="eyebrow">
-              ACTIVE CONTRACT <span>001 / 003</span>
-            </div>
-            <div className="contract-rule" />
-            <small>첫 번째 작전 지역</small>
-            <h2>
-              BLACK RAIN
-              <br />
-              DISTRICT
-            </h2>
-            <p>서울 하층 구역 · 블랙 레인</p>
-            <dl>
-              <div>
-                <dt>목표</dt>
-                <dd>중계기 3개 해킹</dd>
-              </div>
-              <div>
-                <dt>적성 세력</dt>
-                <dd className="red">기업 보안 병력</dd>
-              </div>
-              <div>
-                <dt>작전 방식</dt>
-                <dd>생존 · 자동 사격</dd>
-              </div>
-            </dl>
-            <div className="encrypted">
-              <ShieldCheck size={20} />
-              <span>
-                신원 삭제 완료.
-                <br />
-                당신의 다음 선택은 기록되지 않는다.
-              </span>
-            </div>
-          </aside>
-          <footer className="menu-footer">
-            <span>
-              <b>01</b> BLACK RAIN DISTRICT
-            </span>
-            <span>02 GHOSTLINE TERMINAL</span>
-            <span>03 KINTSUGI ARCOLOGY</span>
-            <small>SOLO SURVIVAL / 한국어</small>
-          </footer>
-        </>
+        <TitleScreen loaded={loaded} start={start} openPanel={name => { audio.current?.play(['ui']); setPanel(name); }} muted={muted} sound={sound} />
       ) : (
         <>
           <header className="simple-hud">
@@ -378,13 +291,22 @@ export function App() {
             </div>
             <div className="operation-strip">
               <span>구역 0{s.sector + 1} <b>{time(s.time)}</b></span>
-              <span>처치 {s.kills} · 중계기 {s.nodes.filter(n => n.p >= 1).length}/3</span>
+              <span>처치 {s.kills} · {boss ? '집행관 처치' : `중계기 ${s.nodes.filter(n => n.p >= 1).length}/3`}</span>
               <button className="icon-button" onClick={sound} aria-label={muted ? "음향 켜기" : "음향 끄기"}>{muted ? <SpeakerSlash /> : <SpeakerHigh />}</button>
               <button className="icon-button" onClick={() => setMode("paused")} aria-label="일시정지"><Pause /></button>
             </div>
+            {boss && (
+              <div className="boss-strip">
+                <span>NULL WARDEN <b>{boss.enraged ? '과부하' : '집행관'}</b></span>
+                <div role="progressbar" aria-label="집행관 체력" aria-valuenow={Math.max(0, Math.ceil(boss.hp))} aria-valuemin={0} aria-valuemax={boss.maxHp}>
+                  <i style={{ width: `${Math.max(0, boss.hp / boss.maxHp * 100)}%` }} />
+                </div>
+                <strong>{Math.max(0, Math.ceil(boss.hp / boss.maxHp * 100))}%</strong>
+              </div>
+            )}
           </header>
           {s.noticeTime > 0 && s.mode === "playing" && (
-            <div className="transmission">
+            <div className={`transmission ${boss ? 'with-boss' : ''}`}>
               
               {s.notice}
             </div>
@@ -442,16 +364,15 @@ export function App() {
             <div className="eyebrow">ENCRYPTED NETWORK / LOCAL ACCESS</div>
             <h2>
               {panel === "armoury"
-                ? "블랙 마켓"
+                ? "무기 도감"
                 : panel === "asset-error"
                   ? "전장 연결 실패"
-                  : "데이터 보관소"}
+                  : "작전 기록"}
             </h2>
             {panel === "armoury" ? (
               <>
                 <p>
-                  전투 중 데이터를 회수하면 아래 사이버웨어를 선택할 수
-                  있습니다.
+                  무작위 무기 하나로 시작합니다. 레벨업마다 3개 선택지에서 새 무기를 장착하거나 보유 무기를 강화하세요. 장착한 무기는 모두 동시에 자동 공격합니다.
                 </p>
                 <div className="catalog">
                   {UPGRADES.map((u) => {
@@ -521,23 +442,29 @@ export function App() {
             {s.mode === "upgrade" ? (
               <>
                 <p>
-                  LEVEL {s.level} · 사이버웨어를 하나 선택하세요. 전투는 잠시
-                  멈춰 있습니다.
+                  LEVEL {s.level} · 새 무기 장착 또는 보유 무기 강화. 전투는 잠시 멈춰 있습니다.
                 </p>
                 <div className="upgrade-grid">
                   {s.choices.map((u) => {
                     const I = ICONS[u.icon];
+                    const rank = s.weapons[u.id] || 0;
                     return (
                       <button
                         key={u.id}
+                        className={rank ? 'weapon-upgrade' : 'weapon-new'}
                         onClick={() => action((st) => chooseUpgrade(st, u.id))}
                       >
                         <I size={38} />
+                        <div className="choice-kind">{rank ? '보유 무기 강화' : '새 무기 장착'}<b>{rank ? `LV.${rank} → ${rank + 1}` : 'NEW'}</b></div>
                         <small>{u.en}</small>
                         <h3>{u.name}</h3>
                         <p>{u.desc}</p>
+                        <div className="weapon-comparison">
+                          {rank > 0 && <del>{weaponSummary(s,u.id,rank)}</del>}
+                          <strong>{weaponSummary(s,u.id,rank+1)}</strong>
+                        </div>
                         <span>
-                          INSTALL <ArrowUpRight />
+                          {rank ? '강화한다' : '장착한다'} <ArrowUpRight />
                         </span>
                       </button>
                     );
@@ -556,10 +483,19 @@ export function App() {
                   </button>
                   <button onClick={() => setMode("menu")}>메인 메뉴</button>
                 </div>
+                <div className="owned-weapons" aria-label="보유 무기">
+                  <h3>보유 무기 · 동시 자동 공격</h3>
+                  {WEAPONS.filter(w=>s.weapons[w.id]).map(w=>{
+                    const I=ICONS[w.icon];
+                    return <div key={w.id}><I size={22}/><section><b>{w.name} <em>LV.{s.weapons[w.id]}</em></b><small>{weaponSummary(s,w.id)}</small></section></div>;
+                  })}
+                </div>
                 <p className="help">
                   WASD / 조이스틱 이동 · Shift 회피 · Space 오버클럭
                   <br />
-                  중계기 원 안에서 8초 유지하면 해킹이 완료됩니다.
+                  중계기 타원 안에서 누적 8초 유지하면 해킹이 완료됩니다.
+                  <br />
+                  돌진 경로·사격선·폭발 범위를 피하세요. 최종 구역은 집행관 처치로 완료됩니다.
                 </p>
               </>
             ) : (
