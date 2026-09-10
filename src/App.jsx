@@ -1,3 +1,4 @@
+import { ABILITIES, abilitySummary } from './abilities.js';
 import React, { useEffect, useRef, useState } from "react";
 import { createCombatAudio } from './audio.js';
 import { TitleScreen } from './TitleScreen.jsx';
@@ -76,6 +77,7 @@ export function App({ initialState = createState } = {}) {
       terminal: new Image(),
       arcology: new Image(),
       atlas: new Image(),
+      enemyTypes: new Image(),
     };
     imgs.bg.src = "/assets/battlefield.png";
     imgs.terminal.src = "/assets/terminal.png";
@@ -83,6 +85,7 @@ export function App({ initialState = createState } = {}) {
     imgs.player.src = "/assets/runner.png";
     imgs.atlas.src = "/assets/walk-atlas.png";
     imgs.enemy.src = "/assets/enemy.png";
+    imgs.enemyTypes.src = "/assets/enemy-types.png";
     Promise.all(Object.values(imgs).map((im) => im.decode()))
       .then(() => {
         // Generated atlas has a light checker matte. Flood only connected background,
@@ -289,6 +292,9 @@ export function App({ initialState = createState } = {}) {
                 <span>경험치 · LV.{s.level}</span><strong>{s.xp} / {s.nextXp}</strong>
               </div>
             </div>
+            <div className="weapon-mini-strip" aria-label="보유 무기와 레벨">
+              {WEAPONS.filter(w=>s.weapons[w.id]).map(w=>{const I=ICONS[w.icon];return <span key={w.id} style={{'--weapon-color':w.color}} title={`${w.name} LV.${s.weapons[w.id]}`} aria-label={`${w.name} 레벨 ${s.weapons[w.id]}`}><I size={16}/><b>{s.weapons[w.id]}</b></span>;})}
+            </div>
             <div className="operation-strip">
               <span>구역 0{s.sector + 1} <b>{time(s.time)}</b></span>
               <span>처치 {s.kills} · {boss ? '집행관 처치' : `중계기 ${s.nodes.filter(n => n.p >= 1).length}/3`}</span>
@@ -316,7 +322,7 @@ export function App({ initialState = createState } = {}) {
               <button disabled={s.dash > 0} onClick={() => action(dash)}>
                 <CaretDoubleRight size={36} weight="bold" />
                 <strong>{s.dash > 0 ? `${s.dash.toFixed(1)}s` : "DASH"}</strong>
-                <kbd>SHIFT</kbd>
+                <kbd>SHIFT · LV.{s.abilities.dash}</kbd>
               </button>
               <button
                 className={s.heat >= 100 ? "ready" : ""}
@@ -327,7 +333,7 @@ export function App({ initialState = createState } = {}) {
                 <strong>
                   {s.heat >= 100 ? "OVERCLOCK" : `${Math.floor(s.heat)}%`}
                 </strong>
-                <kbd>SPACE</kbd>
+                <kbd>SPACE · LV.{s.abilities.overclock}</kbd>
                 <i style={{ width: `${s.heat}%` }} />
               </button>
             </div>
@@ -372,7 +378,7 @@ export function App({ initialState = createState } = {}) {
             {panel === "armoury" ? (
               <>
                 <p>
-                  무작위 무기 하나로 시작합니다. 레벨업마다 3개 선택지에서 새 무기를 장착하거나 보유 무기를 강화하세요. 장착한 무기는 모두 동시에 자동 공격합니다.
+                  무작위 무기 하나로 시작합니다. 레벨업마다 3개 선택지에서 새 무기를 장착하거나 보유 무기·회피·오버클럭을 강화하세요. 장착한 무기는 모두 동시에 자동 공격합니다.
                 </p>
                 <div className="catalog">
                   {UPGRADES.map((u) => {
@@ -442,12 +448,13 @@ export function App({ initialState = createState } = {}) {
             {s.mode === "upgrade" ? (
               <>
                 <p>
-                  LEVEL {s.level} · 새 무기 장착 또는 보유 무기 강화. 전투는 잠시 멈춰 있습니다.
+                  LEVEL {s.level} · 새 무기 장착 · 무기 강화 · 능력 강화. 전투는 잠시 멈춰 있습니다.
                 </p>
                 <div className="upgrade-grid">
                   {s.choices.map((u) => {
                     const I = ICONS[u.icon];
-                    const rank = s.weapons[u.id] || 0;
+                    const rank = (u.ability ? s.abilities[u.id] : s.weapons[u.id]) || 0;
+                    const summary = u.ability ? abilitySummary : weaponSummary;
                     return (
                       <button
                         key={u.id}
@@ -455,13 +462,13 @@ export function App({ initialState = createState } = {}) {
                         onClick={() => action((st) => chooseUpgrade(st, u.id))}
                       >
                         <I size={38} />
-                        <div className="choice-kind">{rank ? '보유 무기 강화' : '새 무기 장착'}<b>{rank ? `LV.${rank} → ${rank + 1}` : 'NEW'}</b></div>
+                        <div className="choice-kind">{u.ability ? '능력 강화' : rank ? '보유 무기 강화' : '새 무기 장착'}<b>{rank ? `LV.${rank} → ${rank + 1}` : 'NEW'}</b></div>
                         <small>{u.en}</small>
                         <h3>{u.name}</h3>
                         <p>{u.desc}</p>
                         <div className="weapon-comparison">
-                          {rank > 0 && <del>{weaponSummary(s,u.id,rank)}</del>}
-                          <strong>{weaponSummary(s,u.id,rank+1)}</strong>
+                          {rank > 0 && <del>{summary(s,u.id,rank)}</del>}
+                          <strong>{summary(s,u.id,rank+1)}</strong>
                         </div>
                         <span>
                           {rank ? '강화한다' : '장착한다'} <ArrowUpRight />
@@ -489,6 +496,9 @@ export function App({ initialState = createState } = {}) {
                     const I=ICONS[w.icon];
                     return <div key={w.id}><I size={22}/><section><b>{w.name} <em>LV.{s.weapons[w.id]}</em></b><small>{weaponSummary(s,w.id)}</small></section></div>;
                   })}
+                </div>
+                <div className="ability-summary">
+                  {ABILITIES.map(a=><p key={a.id}><strong>{a.name} · LV.{s.abilities[a.id]}</strong><br/>{abilitySummary(s,a.id)}</p>)}
                 </div>
                 <p className="help">
                   WASD / 조이스틱 이동 · Shift 회피 · Space 오버클럭

@@ -82,3 +82,7 @@ Browser fixture: `/tests/fixtures/attack-preview.html`, showing all attack famil
 ## CC0 sampled audio — 2026-09-11
 
 Replaced oscillator cues and ambience with 24 unmodified Kenney CC0 OGG files. Sources, pack licenses and SHA-256 hashes are retained. Browser fixture reported 24/24 decoded with no errors; sample playback and mute released active voices. Production build and 45 automated tests pass, including asset integrity, cue coverage, concurrency limits, loading failure/retry and mute/dispose races. Physical-device listening and subjective mix balance remain unverified.
+
+## HUD, abilities and enemy roster — 2026-09-11
+
+Added compact weapon icons/ranks below HP/XP and level labels on ability buttons. Ability cards show before/after cooldown, immunity, damage, radius and charge time. Both abilities cap at LV.6 and persist across sectors. Generated enemy-types.png supplies four walking frames per charger/gunner/bomber/boss, retaining the original soldier/player. Browser fixture scenes `roster` and `abilities` cover full loadout, enemy silhouettes and ability card interactions. Mobile 390×844 cards fit; selecting dash updates its button to LV.2.

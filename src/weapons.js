@@ -1,3 +1,4 @@
+import { ABILITIES, MAX_ABILITY_LEVEL } from './abilities.js';
 import { attackStamp, splash } from './attack-art.js';
 import { cue } from './combat.js';
 
@@ -42,8 +43,9 @@ export function rollUpgrades(s, random = Math.random) {
   const choices=[];
   if (owned.length) choices.push(weightedPick(owned,random));
   if (fresh.length) choices.push(weightedPick(fresh,random));
-  while(choices.length<3) choices.push(weightedPick(WEAPONS.filter(w=>!choices.includes(w)),random));
-  // Every card is a weapon. When possible both equipment and upgrade are represented.
+  const pool=[...WEAPONS,...ABILITIES.filter(a=>(s.abilities?.[a.id]||1)<MAX_ABILITY_LEVEL)];
+  while(choices.length<3) choices.push(weightedPick(pool.filter(w=>!choices.includes(w)),random));
+  // Preserve a new weapon and owned weapon choice where possible; the remaining slot can improve an ability.
   for(let i=choices.length-1;i>0;i--) {
     const j=Math.min(i,Math.floor(Math.max(0,random())*(i+1)));
     [choices[i],choices[j]]=[choices[j],choices[i]];

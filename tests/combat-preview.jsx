@@ -1,3 +1,4 @@
+import { ABILITIES } from '../src/abilities.js';
 // Vite-only visual fixture. Not part of the production entry or build.
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -16,6 +17,8 @@ function fixture() {
   const make = (type, dx, dy) => Object.assign(createEnemy(s, () => .5, type), {
     x: s.x + dx, y: s.y + dy, aim: Math.atan2(-dy, -dx), phase: 'windup', timer: .5, windupDuration: 1.05,
   });
+  if(scene==='abilities') {s.mode='upgrade';equipWeapon(s,'wire');s.choices=[WEAPONS.find(w=>w.id==='wire'),...ABILITIES];return s;}
+  if(scene==='roster') {s.sector=0;WEAPONS.forEach(w=>equipWeapon(s,w.id));s.enemies=[make('charger',-230,-100),make('gunner',0,-180),make('bomber',220,-90),make('boss',80,150)].map(e=>({...e,phase:'chase',walk:1}));return s;}
   if (['choices','loadout','weapons','orbital'].includes(scene)) {
     s.sector=0; s.nodes.forEach(n=>n.p=0); s.level=2; s.spawn=999;
     equipWeapon(s,'wire');

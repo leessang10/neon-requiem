@@ -36,3 +36,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 ## Confirmed sound direction — 2026-09-11
 - Replace synthesized sound effects with free, openly licensed audio files. Use local Kenney CC0 Sci-fi Sounds and Interface Sounds samples, retaining original licenses and provenance in AUDIO-CREDITS.md.
 - Keep the mute control, limit overlapping combat sounds, and distinguish player weapons, enemy attacks, impacts and interface feedback.
+
+## Confirmed HUD, ability progression and enemy art — 2026-09-11
+- Show owned weapon icons and levels in a small row immediately below HP/XP. This supersedes the earlier removal of all weapon indicators; keep the strip compact.
+- The three level-up choices may now include dash or overclock ability upgrades alongside weapon equipment/upgrades. Both abilities start at level 1 and cap at level 6; retain them across sectors.
+- Dash upgrades reduce cooldown and increase invulnerability. Overclock upgrades improve recharge, radius and damage. Show ability levels on their buttons and before/after stats on cards.
+- Use distinct four-frame enemy sprites for orange blade chargers, blue rifle gunners, green reactor bombers and the magenta/gold armored boss. Preserve the existing soldier and player artwork.

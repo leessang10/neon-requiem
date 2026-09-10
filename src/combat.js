@@ -3,7 +3,7 @@ export const RELAY_RADIUS = { x: 72, y: 48 };
 export const ENEMY_STYLE = {
   soldier: { color: '#ff667d', label: '' },
   charger: { color: '#ffba66', label: '돌진' },
-  gunner: { color: '#df94ff', label: '사격' },
+  gunner: { color: '#79bfff', label: '사격' },
   bomber: { color: '#c4f875', label: '자폭' },
   boss: { color: '#ff6eac', label: '집행관 · NULL WARDEN' },
 };

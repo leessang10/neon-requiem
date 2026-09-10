@@ -1173,3 +1173,12 @@ dd {
   .game-shell .abilities strong { font-size: 9px; }
   .game-shell .joystick { left: 18px; bottom: 24px; width: 90px; height: 90px; }
 }
+.weapon-mini-strip {display:flex;gap:5px;align-items:center;min-height:29px;padding:3px 12px;background:#03101bbd;pointer-events:auto;}
+.weapon-mini-strip > span {display:flex;align-items:center;gap:4px;min-width:34px;height:22px;padding:1px 5px;color:var(--weapon-color);background:#102431b0;border:1px solid #799eb526;border-radius:3px;}
+.weapon-mini-strip b {font:700 10px 'Rajdhani',sans-serif;color:#e7f7ff;}
+.game-shell .transmission {top:130px;}
+.game-shell .transmission.with-boss {top:175px;}
+@media(max-width:700px){.weapon-mini-strip{padding:3px 8px;gap:4px;}.weapon-mini-strip > span{min-width:31px;padding-inline:4px;}.abilities kbd{font-size:8px;}}
+.ability-summary {display:flex;gap:16px;text-align:left;flex-wrap:wrap;border-top:1px solid #6bcadc22;margin-top:14px;}
+.ability-summary p {flex:1;min-width:180px;font-size:11px;color:#94b8c5;line-height:1.8;}
+.ability-summary strong {color:#c4e9f2;font-size:12px;}

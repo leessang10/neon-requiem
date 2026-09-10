@@ -1,3 +1,4 @@
+import { ABILITIES, abilityStats, upgradeAbility } from './abilities.js';
 import { attackStamp, splash } from './attack-art.js';
 import { RELAY_RADIUS, ENEMY_STYLE, cue, createEnemy, updateEnemy, updateHostileBullets, renderThreats } from './combat.js';
 import { WEAPONS, equipWeapon, rollUpgrades, stepWeapons, renderWeapons } from './weapons.js';
@@ -8,7 +9,7 @@ export const SECTORS = [
   "GHOSTLINE TERMINAL",
   "KINTSUGI ARCOLOGY",
 ];
-export const UPGRADES = WEAPONS;
+export const UPGRADES = [...WEAPONS,...ABILITIES];
 export function createState() {
   return {
     mode: "menu",
@@ -35,6 +36,7 @@ export function createState() {
     heat: 100,
     enemies: [],
     weapons: {},
+    abilities: { dash:1, overclock:1 },
     weaponTimers: {},
     weaponZones: [],
     weaponFx: [],
@@ -60,7 +62,8 @@ export function createState() {
 }
 export function chooseUpgrade(s, id) {
   if (s.mode !== 'upgrade' || !s.choices.some(w => w.id === id)) return false;
-  equipWeapon(s, id);
+  if (ABILITIES.some(a=>a.id===id)) { if(!upgradeAbility(s,id)) return false; }
+  else equipWeapon(s, id);
   s.mode = "playing";
   s.choices = [];
   s.keys.clear();
@@ -69,19 +72,21 @@ export function chooseUpgrade(s, id) {
 }
 export function dash(s) {
   if (s.mode !== "playing" || s.dash > 0) return;
-  s.dash = s.dashCooldown || 3.2;
+  const stats=abilityStats(s,'dash');
+  s.dash = stats.cooldown;
   s.dashTime = 0.18;
-  s.invuln = 0.4;
+  s.invuln = Math.max(s.invuln,stats.invuln);
   cue(s, 'dash');
 }
 export function overclock(s) {
   if (s.mode !== "playing" || s.heat < 100) return;
   s.heat = 0;
-  s.invuln = 1.2;
+  const stats=abilityStats(s,'overclock');
+  s.invuln = Math.max(s.invuln,1.2);
   cue(s, 'overclock');
-  s.fx.push({ x: s.x, y: s.y, life: 0.7, max: 0.7, type: "pulse", r: 430 });
+  s.fx.push({ x: s.x, y: s.y, life: 0.7, max: 0.7, type: "pulse", r: stats.radius });
   for (const e of s.enemies)
-    if (Math.hypot(e.x - s.x, e.y - s.y) < 430) e.hp -= 100 + s.damage * 2;
+    if (Math.hypot(e.x - s.x, e.y - s.y) < stats.radius) e.hp -= stats.damage;
 }
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export function step(s, dt, random = Math.random) {
@@ -92,7 +97,7 @@ export function step(s, dt, random = Math.random) {
   s.dash = Math.max(0, s.dash - dt);
   s.dashTime = Math.max(0, s.dashTime - dt);
   s.invuln = Math.max(0, s.invuln - dt);
-  s.heat = Math.min(100, s.heat + dt * 4);
+  s.heat = Math.min(100, s.heat + dt * abilityStats(s,'overclock').charge);
   s.noticeTime -= dt;
   let dx =
     (s.keys.has("d") ? 1 : 0) -
@@ -364,7 +369,14 @@ export function render(ctx, s, images, w, h, ambientTime = 0) {
     ctx.save();
     if (e.enemy && e.hit > 0) ctx.filter = 'brightness(1.8)';
     if (Math.cos(e.player ? s.face : e.face) < 0) ctx.scale(-1, 1);
-    if (images.walkAtlas) {
+    const enemyRow={charger:[0,.222],gunner:[.222,.46],bomber:[.46,.69],boss:[.69,1]}[e.type];
+    if(e.enemy && enemyRow && images.enemyTypes?.complete && images.enemyTypes.naturalWidth) {
+      const atlas=images.enemyTypes, fw=atlas.naturalWidth/4;
+      const sy=atlas.naturalHeight*enemyRow[0], fh=atlas.naturalHeight*(enemyRow[1]-enemyRow[0]);
+      const frame=Math.floor(e.walk||0)%4;
+      const height=size*.95,width=height*fw/fh;
+      ctx.drawImage(atlas,frame*fw,sy,fw,fh,-width/2,-height*.85,width,height);
+    } else if (images.walkAtlas) {
       const atlas = images.walkAtlas, fw = atlas.width / 4, fh = atlas.height / 2;
       const frame = Math.floor(e.player ? s.walk : e.walk) % 4;
       ctx.drawImage(atlas, frame * fw, e.player ? 0 : fh, fw, fh,

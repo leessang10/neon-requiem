@@ -25,12 +25,13 @@ test('all seven weapons can coexist, improve, and persist between sectors', () =
   assert.equal(Object.keys(s.weapons).length,7); assert.ok(Object.values(s.weapons).every(n=>n===2)); assert.deepEqual(s.weaponZones, []); assert.deepEqual(s.weaponFx, []);
 });
 
-test('three distinct weapon choices mix new equipment and owned upgrades whenever possible', () => {
+test('three distinct choices preserve weapon options and can include ability upgrades', () => {
   const s = playing(); equipWeapon(s,'wire');
   const a = rollUpgrades(s, () => 0), b = rollUpgrades(s, () => .99);
-  assert.equal(new Set(a.map(w => w.id)).size, 3); assert.ok(a.every(w => w.weapon)); assert.notDeepEqual(a, b);
+  assert.equal(new Set(a.map(w => w.id)).size, 3); assert.ok(a.every(w => w.weapon || w.ability)); assert.notDeepEqual(a, b);
   assert.ok(a.some(w=>s.weapons[w.id])); assert.ok(a.some(w=>!s.weapons[w.id]));
-  assert.ok(UPGRADES.every(w=>w.weapon));
+  assert.ok(UPGRADES.every(w=>w.weapon||w.ability));
+  assert.ok(b.some(w=>w.ability));
   WEAPONS.forEach(w => { s.weapons[w.id] = 20; });
   const allOwned=rollUpgrades(s,()=>.5); assert.equal(allOwned.length,3); choose(s,allOwned[0].id);
   assert.equal(s.weapons[allOwned[0].id],21);
