@@ -42,3 +42,12 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - The three level-up choices may now include dash or overclock ability upgrades alongside weapon equipment/upgrades. Both abilities start at level 1 and cap at level 6; retain them across sectors.
 - Dash upgrades reduce cooldown and increase invulnerability. Overclock upgrades improve recharge, radius and damage. Show ability levels on their buttons and before/after stats on cards.
 - Use distinct four-frame enemy sprites for orange blade chargers, blue rifle gunners, green reactor bombers and the magenta/gold armored boss. Preserve the existing soldier and player artwork.
+
+## Confirmed VFX style — 2026-09-11
+- Simple procedural splash shapes still feel inconsistent with the character/enemy/background artwork. Use authored, textured sprite artwork for attacks, with four-frame slash, shockwave, explosion, vortex and plasma animation.
+- Preserve painted metal fragments, smoke and material detail through normal alpha compositing. Keep readable enemy warning shapes and existing damage/timing rules.
+
+## Confirmed slash and ballistic art — 2026-09-11
+- Remove the spinning slash treatment. Play authored slash frames in a fixed attack direction, without an orbiting duplicate.
+- Hunter drones and smart rifles need authored sprite graphics like the other weapons: detailed drone/rifle bodies and distinct four-frame cyan/gold projectile effects.
+- Remove floating enemy type names above units (including charger, gunner, bomber and boss); retain visual telegraphs and the boss health HUD.

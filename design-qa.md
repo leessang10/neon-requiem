@@ -86,3 +86,12 @@ Replaced oscillator cues and ambience with 24 unmodified Kenney CC0 OGG files. S
 ## HUD, abilities and enemy roster — 2026-09-11
 
 Added compact weapon icons/ranks below HP/XP and level labels on ability buttons. Ability cards show before/after cooldown, immunity, damage, radius and charge time. Both abilities cap at LV.6 and persist across sectors. Generated enemy-types.png supplies four walking frames per charger/gunner/bomber/boss, retaining the original soldier/player. Browser fixture scenes `roster` and `abilities` cover full loadout, enemy silhouettes and ability card interactions. Mobile 390×844 cards fit; selecting dash updates its button to LV.2.
+## Authored attack sprites — 2026-09-11
+
+Replaced procedural VFX generation with `public/assets/attack-sprites.png`: five authored effect families and four animation stages each, styled against the enemy sprite reference. Explicit source gutters prevent neighboring-frame fragments. Loading removes the exported white matte once and caches projectile color variants; normal alpha compositing preserves painted smoke and metallic debris. One-shot frames use effect lifetime, looping effects use simulation time so pausing freezes them. Damage, cooldowns and enemy warning boundaries are unchanged.
+
+Verified the attack gallery and actual combat fixture in the browser, with no console errors. Production build and 50 automated tests pass, including atlas row/frame selection and stable paused frames.
+
+## Slash, ballistics and enemy labels — 2026-09-11
+
+Slash lifetime now advances four authored frames at a fixed attack angle, without a rotating duplicate. Hunter drones, smart rifles and their cyan/gold projectiles use the ballistic atlas. Removed floating enemy type labels while retaining warnings and boss health. Verified ballistics and roster fixtures in the in-app browser. Production build, all 51 automated tests and test:sites pass.

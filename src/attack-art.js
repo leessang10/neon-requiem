@@ -1,81 +1,56 @@
-// Transparent raster stamps are baked once, then animated with cheap canvas blits.
-// Stable geometry keeps paused effects still and never consumes gameplay randomness.
-const stamps = new Map();
-const TAU = Math.PI * 2;
-const noise = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-
-function bake(kind, color) {
-  if (typeof document === 'undefined') return null;
-  const key = `${kind}:${color}`;
-  if (stamps.has(key)) return stamps.get(key);
-  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 384;
-  const c = canvas.getContext('2d'); c.translate(192, 192);
-  const glow = (r, intensity = .7) => {
-    const g = c.createRadialGradient(0, 0, 0, 0, 0, r);
-    g.addColorStop(0, '#ffffff'); g.addColorStop(.12, color);
-    g.addColorStop(.42, `${color}90`); g.addColorStop(1, `${color}00`);
-    c.globalAlpha = intensity; c.fillStyle = g; c.fillRect(-r, -r, r * 2, r * 2); c.globalAlpha = 1;
+// Authored four-frame VFX atlas, matching the game's painted character sprites.
+const ROWS={slash:0,ring:1,burst:2,vortex:3,bolt:4};
+// Authored sheet gutters; explicit bounds prevent sparks from adjacent frames.
+const COLS=[0,245/1122,550/1122,845/1122,1];
+const BANDS=[0,300/1402,570/1402,860/1402,1165/1402,1];
+let atlas,clock=0;
+const variants=new Map();
+export function setAttackTime(time){clock=time;}
+export function setAttackAtlas(image){
+  if(atlas?.source===image)return;
+  variants.clear();
+  if(typeof document==='undefined'){atlas={source:image,sheet:image};return;}
+  const sheet=document.createElement('canvas');sheet.width=image.naturalWidth;sheet.height=image.naturalHeight;
+  const c=sheet.getContext('2d',{willReadFrequently:true});c.drawImage(image,0,0);
+  // The exported source includes a white matte. Remove connected neutral
+  // background once during loading, just as for the character walk atlas.
+  const pixels=c.getImageData(0,0,sheet.width,sheet.height),d=pixels.data;
+  const w=sheet.width,h=sheet.height,seen=new Uint8Array(w*h),queue=new Int32Array(w*h);
+  let head=0,tail=0;
+  const add=i=>{if(i<0||i>=w*h||seen[i])return;seen[i]=1;
+    const r=d[i*4],g=d[i*4+1],b=d[i*4+2];
+    if(Math.min(r,g,b)>165&&Math.max(r,g,b)-Math.min(r,g,b)<22)queue[tail++]=i;
   };
-  c.fillStyle = color;
-  if (kind === 'slash') {
-    for (let layer = 0; layer < 7; layer++) {
-      const r = 155 - layer * 6;
-      c.globalAlpha = .12 + layer * .08;
-      c.beginPath(); c.arc(0, 0, r, -.9, 2.6);
-      c.bezierCurveTo(-r * .6, r * .1, r * .5, r * .8, Math.cos(-.9) * r, Math.sin(-.9) * r);
-      c.fill();
-    }
-    c.globalAlpha = 1; c.strokeStyle = '#e7ffff'; c.lineWidth = 3;
-    c.beginPath(); c.arc(0, 0, 156, -.8, 2.1); c.stroke();
-  } else if (kind === 'ring' || kind === 'vortex') {
-    const g = c.createRadialGradient(0, 0, 40, 0, 0, 181);
-    g.addColorStop(0, `${color}00`); g.addColorStop(.55, `${color}08`);
-    g.addColorStop(.78, `${color}65`); g.addColorStop(.87, color); g.addColorStop(1, `${color}00`);
-    c.fillStyle = g; c.fillRect(-184, -184, 368, 368);
-    c.strokeStyle = color;
-    for (let i = 0; i < 11; i++) {
-      c.lineWidth = 2 + noise(i) * 7; c.globalAlpha = .3 + noise(i + 5) * .6;
-      c.beginPath(); c.arc(0, 0, kind === 'vortex' ? 28 + i * 12 : 148 + noise(i) * 15, i * 2.4, i * 2.4 + .35 + noise(i + 8)); c.stroke();
-    }
-    if (kind === 'vortex') { c.globalAlpha = 1; c.fillStyle = '#080318'; c.beginPath(); c.arc(0, 0, 36, 0, TAU); c.fill(); }
-  } else if (kind === 'bolt') {
-    c.save(); c.scale(1, .22); glow(176); c.restore();
-    for (let i = 0; i < 9; i++) {
-      const y = (noise(i) - .5) * 38;
-      c.fillStyle = i % 3 ? color : '#ffffff'; c.globalAlpha = .4 + noise(i) * .5;
-      c.beginPath(); c.moveTo(140, y); c.lineTo(-140 + noise(i + 5) * 140, y - 4); c.lineTo(-80, y + 7); c.closePath(); c.fill();
-    }
-  } else {
-    glow(175, .85);
-    for (let i = 0; i < 42; i++) {
-      const a = i * 2.399, r = 32 + noise(i) * 135;
-      c.save(); c.rotate(a); c.globalAlpha = .3 + noise(i + 2) * .7;
-      c.fillStyle = i % 4 ? color : '#fff7ef';
-      c.beginPath(); c.moveTo(r, 0); c.lineTo(r - 22 - noise(i + 4) * 65, -2 - noise(i) * 8); c.lineTo(r - 12, 3 + noise(i + 1) * 7); c.closePath(); c.fill(); c.restore();
-    }
-  }
-  c.globalAlpha = 1;
-  // Broken glowing fragments around the silhouette give each stamp a splash edge.
-  for (let i = 0; i < 24; i++) {
-    const a = i * 2.399, r = 120 + noise(i + 18) * 57;
-    c.save(); c.rotate(a); c.fillStyle = i % 3 ? color : '#eaffff';
-    c.globalAlpha = .25 + noise(i + 1) * .6;
-    if (kind !== 'bolt') c.fillRect(r, -2, 2 + noise(i) * 10, 2 + noise(i + 5) * 4);
-    c.restore();
-  }
-  stamps.set(key, canvas); return canvas;
+  for(let x=0;x<w;x++){add(x);add((h-1)*w+x);}
+  for(let y=0;y<h;y++){add(y*w);add(y*w+w-1);}
+  // Open centers of closed shockwaves also need background removal.
+  for(let row=0;row<5;row++)for(let col=0;col<4;col++)add(Math.floor((BANDS[row]+BANDS[row+1])*h/2)*w+Math.floor((COLS[col]+COLS[col+1])*w/2));
+  while(head<tail){const i=queue[head++];d[i*4+3]=0;if(i%w)add(i-1);if(i%w<w-1)add(i+1);add(i-w);add(i+w);}
+  c.putImageData(pixels,0,0);atlas={source:image,sheet};
 }
-
-export function attackStamp(ctx, kind, color, x, y, radius, angle = 0, alpha = 1, aspect = 1) {
-  const sprite = bake(kind, color); if (!sprite || radius <= 0 || alpha <= 0) return;
-  ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.globalAlpha *= alpha;
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.drawImage(sprite, -radius, -radius * aspect, radius * 2, radius * 2 * aspect);
+function spriteVariant(kind,color){
+  const warm=['#ff628e','#ff9cbd','#ff6eac','#ff667d'].includes(color)?'red'
+    :['#ffcf87','#ffe9b0','#ffe297','#ffba66'].includes(color)?'gold':'base';
+  if(kind!=='bolt'||warm==='base'||typeof document==='undefined')return atlas.sheet;
+  if(!variants.has(warm)){
+    const c=document.createElement('canvas');c.width=atlas.sheet.width;c.height=atlas.sheet.height;
+    const ctx=c.getContext('2d');ctx.filter=`hue-rotate(${warm==='red'?135:195}deg)`;ctx.drawImage(atlas.sheet,0,0);variants.set(warm,c);
+  }
+  return variants.get(warm);
+}
+export function attackStamp(ctx,kind,color,x,y,radius,angle=0,alpha=1,aspect=1,progress){
+  if(!atlas||radius<=0||alpha<=0)return;
+  const row=ROWS[kind]??2,frame=progress===undefined?Math.floor(clock*12)%4:Math.min(3,Math.floor(Math.max(0,progress)*4));
+  const sprite=spriteVariant(kind,color);
+  const sx=COLS[frame]*sprite.width,sy=BANDS[row]*sprite.height;
+  const fw=(COLS[frame+1]-COLS[frame])*sprite.width,fh=(BANDS[row+1]-BANDS[row])*sprite.height;
+  ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.globalAlpha*=alpha;
+  // Source-over preserves the dark smoke and solid debris instead of bleaching it.
+  ctx.drawImage(sprite,sx,sy,fw,fh,-radius,-radius*aspect,radius*2,radius*2*aspect);
   ctx.restore();
 }
-
-export function splash(ctx, x, y, r, progress, color) {
-  const p = Math.max(0, Math.min(1, progress));
-  attackStamp(ctx, 'burst', color, x, y, r * (.3 + .85 * Math.sqrt(p)), p * .2, (1 - p) * .9);
-  attackStamp(ctx, 'ring', color, x, y, r * (.3 + .75 * p), -p * .2, (1 - p) * .8);
+export function splash(ctx,x,y,r,progress,color){
+  const p=Math.max(0,Math.min(1,progress));
+  const cold=['#7af4ff','#76baff','#b9b5ff'].includes(color);
+  attackStamp(ctx,cold?'ring':'burst',color,x,y,r*(.85+.2*p),0,Math.min(1,(1-p)*3),1,p);
 }

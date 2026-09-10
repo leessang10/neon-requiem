@@ -17,6 +17,15 @@ function fixture() {
   const make = (type, dx, dy) => Object.assign(createEnemy(s, () => .5, type), {
     x: s.x + dx, y: s.y + dy, aim: Math.atan2(-dy, -dx), phase: 'windup', timer: .5, windupDuration: 1.05,
   });
+  if(scene==='ballistics') {
+    s.sector=0;s.level=4;s.spawn=999;s.nodes.forEach(n=>n.p=0);
+    ['rifle','drone','drone','drone','wire'].forEach(id=>equipWeapon(s,id));
+    s.enemies=[make('soldier',190,-60),make('soldier',-160,90)].map(e=>({...e,hp:10000,maxHp:10000,phase:'chase'}));
+    s.mode='playing';stepWeapons(s,.01,()=>.5);s.mode='inspection';
+    s.weaponFx.forEach(f=>f.life=f.max*.65);
+    s.bullets.forEach(b=>{b.x+=b.vx*.12;b.y+=b.vy*.12;b.life-=.12;});
+    return s;
+  }
   if(scene==='abilities') {s.mode='upgrade';equipWeapon(s,'wire');s.choices=[WEAPONS.find(w=>w.id==='wire'),...ABILITIES];return s;}
   if(scene==='roster') {s.sector=0;WEAPONS.forEach(w=>equipWeapon(s,w.id));s.enemies=[make('charger',-230,-100),make('gunner',0,-180),make('bomber',220,-90),make('boss',80,150)].map(e=>({...e,phase:'chase',walk:1}));return s;}
   if (['choices','loadout','weapons','orbital'].includes(scene)) {

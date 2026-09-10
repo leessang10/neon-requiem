@@ -1,5 +1,6 @@
 import { ABILITIES, abilityStats, upgradeAbility } from './abilities.js';
-import { attackStamp, splash } from './attack-art.js';
+import { splash } from './attack-art.js';
+import { renderBallistics } from './ballistic-art.js';
 import { RELAY_RADIUS, ENEMY_STYLE, cue, createEnemy, updateEnemy, updateHostileBullets, renderThreats } from './combat.js';
 import { WEAPONS, equipWeapon, rollUpgrades, stepWeapons, renderWeapons } from './weapons.js';
 export const WORLD = { width: 4320, height: 3072 };
@@ -352,8 +353,6 @@ export function render(ctx, s, images, w, h, ambientTime = 0) {
       ctx.strokeStyle = style.color;
       ctx.lineWidth = e.type === 'boss' ? 3 : 1.5;
       ctx.beginPath(); ctx.ellipse(0, 12, e.type === 'boss' ? 53 : 27, e.type === 'boss' ? 28 : 15, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.font = `${e.type === 'boss' ? 13 : 11}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = style.color;
-      ctx.fillText(e.type === 'boss' && e.enraged ? '집행관 · 과부하' : style.label, 0, -size * .8 - 8);
     }
     if (e.player) {
       ctx.strokeStyle = "#66efff";
@@ -391,21 +390,7 @@ export function render(ctx, s, images, w, h, ambientTime = 0) {
     }
     ctx.restore();
   }
-  for (let i = 0; i < s.drones; i++) {
-    const x = s.x + Math.cos(s.time * 2 + (i + 1) * 2) * 60,
-      y = s.y + Math.sin(s.time * 2 + (i + 1) * 2) * 40 - 20;
-    ctx.save();
-    ctx.shadowColor = "#51ddff";
-    ctx.shadowBlur = 13;
-    ctx.fillStyle = "#aeffff";
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-  for (const b of s.bullets) {
-    attackStamp(ctx,'bolt',b.drone?'#79ecff':'#ffcf87',b.x,b.y,25,Math.atan2(b.vy,b.vx),1,.65);
-  }
+  renderBallistics(ctx, s);
   for (const f of s.fx) {
     const p=1-f.life/f.max;
     splash(ctx,f.x,f.y,f.type==='pulse'||f.type==='blast'?f.r:34,p,

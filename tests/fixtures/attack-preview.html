@@ -1,8 +1,9 @@
 <!doctype html><html lang="ko"><meta charset="utf-8"><title>공격 이펙트 검증</title><style>body{margin:0;background:#04101a;color:#d9faff;font-family:sans-serif}canvas{width:100%;display:block}button{position:fixed;right:20px;top:15px;padding:10px}</style><canvas width="1440" height="960"></canvas><button>정지 / 재생</button><script type="module">
 import {renderWeapons} from '/src/weapons.js';
 import {renderThreats} from '/src/combat.js';
-import {splash} from '/src/attack-art.js';
+import {splash,setAttackAtlas} from '/src/attack-art.js';
 const c=document.querySelector('canvas').getContext('2d'),bg=new Image();bg.src='/assets/battlefield.png';
+const art=new Image();art.src='/assets/attack-sprites.png';await art.decode();setAttackAtlas(art);
 let time=.18,paused=false,last=performance.now();document.querySelector('button').onclick=()=>paused=!paused;
 function frame(now){if(!paused)time+=(now-last)/1000;last=now;c.clearRect(0,0,1440,960);if(bg.complete&&bg.naturalWidth)c.drawImage(bg,0,0,1440,960);c.fillStyle='#020914ac';c.fillRect(0,0,1440,960);
 const p=(time%1.4)/1.4,life=1-p;

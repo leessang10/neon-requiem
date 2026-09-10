@@ -1,6 +1,7 @@
 import { ABILITIES, MAX_ABILITY_LEVEL } from './abilities.js';
-import { attackStamp, splash } from './attack-art.js';
+import { attackStamp, splash, setAttackTime } from './attack-art.js';
 import { cue } from './combat.js';
+import { dronePosition } from './ballistic-art.js';
 
 export const WEAPONS = [
   { id:'rifle', name:'스마트 라이플', en:'SMART RIFLE', icon:'crosshair', weapon:true, weight:3, color:'#ffdda6', desc:'가까운 적을 조준하는 고속 자동 사격', damage:18, cooldown:.34, radius:440 },
@@ -96,9 +97,11 @@ export function stepWeapons(s,dt,random=Math.random) {
     if(w.id==='rifle'||w.id==='drone') {
       for(let i=0;i<v.count;i++) {
         const drone=w.id==='drone';
-        const x=s.x+(drone?Math.cos(s.time*2+(i+1)*2)*60:0), y=s.y+(drone?Math.sin(s.time*2+(i+1)*2)*40-20:0);
+        const {x,y}=drone?dronePosition(s,i):{x:s.x,y:s.y};
         const target=targets.reduce((a,b)=>Math.hypot(a.x-x,a.y-y)<Math.hypot(b.x-x,b.y-y)?a:b);
         bullet(s,x,y,target,v.damage,drone);
+        s.ballisticShots??={};
+        s.ballisticShots[drone?`drone${i}`:'rifle']={angle:Math.atan2(target.y-y,target.x-x),time:s.time};
       }
       cue(s,'shot');
     } else if(w.id==='wire'||w.id==='emp') {
@@ -131,12 +134,12 @@ export function stepWeapons(s,dt,random=Math.random) {
 }
 
 export function renderWeapons(ctx,s) {
+  setAttackTime(s.time);
   for(const z of s.weaponZones) {
     ctx.save(); ctx.translate(z.x,z.y);
     const p=1-z.life/z.max;
     if(z.kind==='gravity') {
       attackStamp(ctx,'vortex','#b18aff',0,0,z.r,s.time*.8,.85);
-      attackStamp(ctx,'slash','#9a63ff',0,0,z.r*.75,-s.time*1.4,.6);
       for(let i=0;i<8;i++) {
         const a=i*2.4+s.time*2, r=z.r*(1-((s.time*.6+i/8)%1));
         attackStamp(ctx,'bolt','#dac0ff',Math.cos(a)*r,Math.sin(a)*r,14,a+Math.PI/2,.7);
@@ -164,11 +167,10 @@ export function renderWeapons(ctx,s) {
         splash(ctx,b.x,b.y,48,p,'#b9b5ff');
       }
     } else if(f.kind==='wire') {
-      attackStamp(ctx,'slash','#8cfff3',f.x,f.y,f.r*1.08,(f.angle||0)+p*Math.PI*2,fade);
-      attackStamp(ctx,'slash','#42c7d9',f.x,f.y,f.r*.86,(f.angle||0)+p*Math.PI*2+2.8,fade*.7);
+      // The authored frames supply the sweep. A lifetime rotation made it spin like a wheel.
+      attackStamp(ctx,'slash','#8cfff3',f.x,f.y,f.r*1.08,f.angle||0,fade,1,p);
     } else if(f.kind==='emp') {
       splash(ctx,f.x,f.y,f.r,p,'#76baff');
-      attackStamp(ctx,'ring','#bbfaff',f.x,f.y,f.r*(.2+.8*p),p,fade);
     } else if(f.kind==='orbital') {
       splash(ctx,f.x,f.y,f.r,p,f.boosted?'#ffd36d':'#ffac68');
       attackStamp(ctx,'bolt','#ffe9b0',f.x,f.y-180,255,Math.PI/2,fade*.7,.24);

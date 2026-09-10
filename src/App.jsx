@@ -1,3 +1,5 @@
+import { setAttackAtlas } from './attack-art.js';
+import { setBallisticAtlas } from './ballistic-art.js';
 import { ABILITIES, abilitySummary } from './abilities.js';
 import React, { useEffect, useRef, useState } from "react";
 import { createCombatAudio } from './audio.js';
@@ -78,6 +80,8 @@ export function App({ initialState = createState } = {}) {
       arcology: new Image(),
       atlas: new Image(),
       enemyTypes: new Image(),
+      attackSprites: new Image(),
+      ballisticSprites: new Image(),
     };
     imgs.bg.src = "/assets/battlefield.png";
     imgs.terminal.src = "/assets/terminal.png";
@@ -86,8 +90,12 @@ export function App({ initialState = createState } = {}) {
     imgs.atlas.src = "/assets/walk-atlas.png";
     imgs.enemy.src = "/assets/enemy.png";
     imgs.enemyTypes.src = "/assets/enemy-types.png";
+    imgs.attackSprites.src = "/assets/attack-sprites.png";
+    imgs.ballisticSprites.src = "/assets/ballistic-sprites.png";
     Promise.all(Object.values(imgs).map((im) => im.decode()))
       .then(() => {
+        setAttackAtlas(imgs.attackSprites);
+        setBallisticAtlas(imgs.ballisticSprites);
         // Generated atlas has a light checker matte. Flood only connected background,
         // preserving enclosed metallic highlights and the actual limb silhouettes.
         const sheet = document.createElement("canvas");
